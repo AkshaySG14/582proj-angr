@@ -323,7 +323,7 @@ class SimOS:
         F_PROT_32 = 0x4
         S_GDT = 0x0
         S_PRIV_0 = 0x0
-        GDT_ADDR = 0x4000
+        GDT_ADDR = 0x1000
         GDT_LIMIT = 0x1000
 
         normal_entry = self._create_gdt_entry(0, 0xFFFFFFFF,

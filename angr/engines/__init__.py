@@ -50,4 +50,6 @@ soot_preset.order = ['soot', 'vex']
 ail_preset = basic_preset.copy()
 EngineHub.register_preset('ail', ail_preset)
 ail_preset.add_default_plugin('ail', SimEngineAIL)
+ail_preset.add_default_plugin('vex', SimEngineVEX)
 ail_preset.default_engine = 'ail'
+ail_preset.order = 'ail', 'vex'

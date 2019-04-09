@@ -19,7 +19,12 @@ class EmptyBlockNotice(Exception):
     pass
 
 
-class SequenceNode:
+class BaseNode:
+    def children(self):
+        raise NotImplementedError()
+
+
+class SequenceNode(BaseNode):
     def __init__(self, nodes=None):
         self.nodes = nodes if nodes is not None else [ ]
 
@@ -32,6 +37,10 @@ class SequenceNode:
             return self.nodes[0].addr
         else:
             return None
+
+    def children(self):
+        for node in self.nodes:
+            yield node
 
     def add_node(self, node):
         self.nodes.append(node)
@@ -98,7 +107,7 @@ class SequenceNode:
         return s
 
 
-class CodeNode:
+class CodeNode(BaseNode):
     def __init__(self, node, reaching_condition):
         self.node = node
         self.reaching_condition = reaching_condition
@@ -115,6 +124,9 @@ class CodeNode:
             return self.node.addr
         else:
             return None
+
+    def children(self):
+        yield self.node
 
     def dbg_repr(self, indent=0):
         indent_str = indent * " "
@@ -134,13 +146,17 @@ class CodeNode:
         return CodeNode(self.node, self.reaching_condition)
 
 
-class ConditionNode:
+class ConditionNode(BaseNode):
     def __init__(self, addr, reaching_condition, condition, true_node, false_node=None):
         self.addr = addr
         self.reaching_condition = reaching_condition
         self.condition = condition
         self.true_node = true_node
         self.false_node = false_node
+
+    def children(self):
+        yield self.true_node
+        yield self.false_node
 
     def dbg_repr(self, indent=0):
         indent_str = indent * " "
@@ -161,7 +177,7 @@ class ConditionNode:
         return s
 
 
-class LoopNode:
+class LoopNode(BaseNode):
     def __init__(self, sort, condition, sequence_node, addr=None):
         self.sort = sort
         self.condition = condition
@@ -175,11 +191,17 @@ class LoopNode:
         else:
             return self._addr
 
+    def children(self):
+        yield self.sequence_node
 
-class BreakNode:
+
+class BreakNode(BaseNode):
     def __init__(self, addr, target):
         self.addr = addr
         self.target = target
+
+    def children(self):
+        raise StopIteration()
 
 
 class ConditionalBreakNode(BreakNode):

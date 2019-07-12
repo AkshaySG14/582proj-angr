@@ -208,11 +208,10 @@ class SimSuccessors(object):
 
             state._inspect('call', BP_AFTER)
         else:
-            while (
-                state.solver.is_true(state.regs._sp > state.callstack.top.stack_ptr)
-                if not state.regs._sp.symbolic else
-                state.solver.eval_one(state.regs._sp > state.callstack.top.stack_ptr)
-            ):
+            while True:
+                cur_sp = state.solver.max(state.regs._sp) if state.has_plugin('symbolizer') else state.regs._sp
+                if not state.solver.is_true(cur_sp > state.callstack.top.stack_ptr):
+                    break
                 state._inspect('return', BP_BEFORE, function_address=state.callstack.top.func_addr)
                 state.callstack.pop()
                 state._inspect('return', BP_AFTER)

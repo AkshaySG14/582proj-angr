@@ -82,6 +82,7 @@ class SimEngineVRVEX(
 
             return RichR(sum_,
                          typevar=typevar,
+                         type_constraints={ typevars.Subtype(r0.typevar, r1.typevar) },
                          )
         except TypeError as e:
             self.l.warning(e)

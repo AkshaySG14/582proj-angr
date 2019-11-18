@@ -164,7 +164,7 @@ class CallingConventionAnalysis(Analysis):
             return True
 
     @staticmethod
-    def recover_calling_conventions(project, kb=None):
+    def recover_calling_conventions(project, kb=None, fast=False, libfuncs_only=False):
         """
 
         :return:

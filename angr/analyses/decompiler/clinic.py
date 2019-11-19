@@ -233,13 +233,17 @@ class Clinic(Analysis):
     def _recover_and_link_variables(self):
 
         # variable recovery
-        tmp_kb = KnowledgeBase(self.project)
-        vr = self.project.analyses.VariableRecoveryFast(self.function, clinic=self, kb=tmp_kb)  # pylint:disable=unused-variable
+        vr = self.project.analyses.VariableRecoveryFast(self.function, clinic=self, kb=self.kb)
+        # clean up existing types
+        self.kb.variables[self.function.addr].remove_types()
+        tp = self.project.analyses.Typehoon(vr.type_constraints, kb=self.kb)
+        tp.update_variable_types(self.function.addr, vr.var_to_typevar)
 
         # TODO: The current mapping implementation is kinda hackish...
 
+        # Link variables to each statement
         for block in self._blocks.values():
-            self._link_variables_on_block(block, tmp_kb)
+            self._link_variables_on_block(block, self.kb)
 
     def _link_variables_on_block(self, block, kb):
         """

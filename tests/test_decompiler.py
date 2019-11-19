@@ -97,6 +97,21 @@ def test_decompiling_mips_allcmps():
     else:
         print("Failed to decompile function %s." % repr(f))
 
+
+def test_decompiling_linked_list():
+    bin_path = os.path.join(test_location, "x86_64", "linked_list")
+    p = angr.Project(bin_path, auto_load_libs=False)
+
+    cfg = p.analyses.CFG(collect_data_references=True)
+
+    f = cfg.functions['sum']
+    dec = p.analyses.Decompiler(f, cfg=cfg)
+    if dec.codegen is not None:
+        print(dec.codegen.text)
+    else:
+        print("Failed to decompile function %s." % repr(f))
+
+
 if __name__ == "__main__":
     for k, v in list(globals().items()):
         if k.startswith('test_') and callable(v):

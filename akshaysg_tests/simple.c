@@ -15,7 +15,7 @@ int main(int argc, char **argv)
     }
     if (test > 0 && length <= 10) {
         for (int i = 0; i < length; ++i) {
-            arr[i] = 5;
+            printf("%d\n", arr[i] = 5);
             printf("%d\n", i);
         }
         printf("Test");

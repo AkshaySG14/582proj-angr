@@ -16,16 +16,20 @@ int main(int argc, char **argv)
         printf("Error\n");
         return 0;
     }
-    if (test > 0 && length <= 10) {
-        printf("%d\n", arr[length]);
-        printf("%d\n", arr[test]);
-        for (int i = 0; i < length; ++i) {
-            printf("%d\n", arr[i] = 5);
-            printf("%d\n", i);
+    else {
+        if (test > 0) {
+            if (length <= 10) {
+                printf("%d\n", arr[length]);
+                printf("%d\n", arr[test]);
+                for (int i = 0; i < length; ++i) {
+                    printf("%d\n", arr[i] = 5);
+                    printf("%d\n", i);
+                }
+            }
+            printf("Test");
+        } else {
+            printf("Second Branch");
         }
-        printf("Test");
-    } else {
-        printf("Second Branch");
     }
     return 0;
 }

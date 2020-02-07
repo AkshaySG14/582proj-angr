@@ -6,12 +6,11 @@ static int boo = 5, goo = 19, doo = 21;
 
 int main(int argc, char **argv)
 {
-    time_t t;
-    srand((unsigned) time(&t));
-
     printf("Hello World\n");
-    int test = rand() % 20;
-    int length = rand() % 20;
+
+    int test = argv[0];
+    int length = argv[1];
+
     if (test > 0) {
         if (length <= 10) {
             for (int i = 0; i < length; ++i) {

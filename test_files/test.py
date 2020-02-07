@@ -14,7 +14,7 @@ def main():
 
     if simgr.found:
         print("found!")
-        print("{}".format(pg.found[0].state.se.any_int(u)))
+        print("{}".format(simgr.found[0].state.se.any_int(test)))
     else:
         print("no paths found")
 

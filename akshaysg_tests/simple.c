@@ -13,6 +13,7 @@ int main(int argc, char **argv)
 
     if (test > 0) {
         if (length <= 10) {
+            printf("Woaht\n");
             for (int i = 0; i < length; ++i) {
                 printf("%d\n", i);
             }

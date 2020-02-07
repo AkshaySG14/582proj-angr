@@ -8,8 +8,8 @@ int main(int argc, char **argv)
 {
     printf("Hello World\n");
 
-    int test = argv[0];
-    int length = argv[1];
+    int test = atoi(argv[0]);
+    int length = atoi(argv[1]);
 
     if (test > 0) {
         if (length <= 10) {

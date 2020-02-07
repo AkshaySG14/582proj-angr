@@ -4,13 +4,13 @@ import claripy
 def main():
     p = angr.Project('../akshaysg_tests/simple', load_options={"auto_load_libs": False})
 
-    test = claripy.BVS('arg1', 8 * 8)
-    length = claripy.BVS('arg2', 8 * 8)
+    test = claripy.BVS('arg1', 8 * 4)
+    length = claripy.BVS('arg2', 8 * 4)
 
-    state = p.factory.entry_state(args=[test, length], add_options={"SYMBOLIC_WRITE_ADDRESSES"})
+    state = p.factory.entry_state(args=['simple', test, length])
     simgr = p.factory.simgr(state)
 
-    simgr.explore(find=lambda s: b"Woah" in s.posix.dumps(1))
+    simgr.explore(find=lambda b: b"Woah" in s.posix.dumps(1))
 
     if simgr.found:
         print("found!")

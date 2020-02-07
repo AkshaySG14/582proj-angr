@@ -8,12 +8,12 @@ int main(int argc, char **argv)
 {
     printf("Hello World\n");
 
-    int test = atoi(argv[0]);
-    int length = atoi(argv[1]);
+    int test = atoi(argv[1]);
+    int length = atoi(argv[2]);
 
     if (test > 0) {
         if (length <= 10) {
-            printf("Woaht\n");
+            printf("Woah\n");
             for (int i = 0; i < length; ++i) {
                 printf("%d\n", i);
             }

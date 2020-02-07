@@ -793,6 +793,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         is_size_symbolic = self.state.solver.symbolic(req.size)
         is_addr_symbolic = self.state.solver.symbolic(req.addr)
         if not is_size_symbolic and len(req.actual_addresses) == 1:
+            print("Doge Coin")
             store_list = self._store_fully_concrete(req.actual_addresses[0], req.size, req.data, req.endness, req.condition)
         elif not is_addr_symbolic:
             store_list = self._store_symbolic_size(req.addr, req.size, req.data, req.endness, req.condition)

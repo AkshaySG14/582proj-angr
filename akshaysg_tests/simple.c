@@ -8,6 +8,7 @@ int main(int argc, char **argv)
 {
     printf("Hello World\n");
 
+    int arr[10];
     int test = atoi(argv[1]);
     int length = atoi(argv[2]);
 
@@ -15,6 +16,7 @@ int main(int argc, char **argv)
         if (length <= 10) {
             printf("Woah\n");
             for (int i = 0; i < length; ++i) {
+                arr[i] = i;
                 printf("%d\n", i);
             }
         }

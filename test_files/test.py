@@ -10,7 +10,7 @@ def main():
     state = p.factory.entry_state(args=['simple', test, length])
     simgr = p.factory.simgr(state)
 
-    simgr.explore(find=lambda sm: b"Woah" in sm.posix.dumps(0))
+    simgr.explore(find=lambda sm: b"Woah" in sm.posix.dumps(1))
 
     if simgr.found:
         print("found!")

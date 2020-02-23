@@ -573,9 +573,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
 
         # get a concrete set of read addresses
         try:
-            print("WOGE {} WOGE".format(dst))
             addrs = self.state.solver.eval_upto(dst, 255, exact=True)
-            print("POGE {} POGE".format(addrs))
         except SimMemoryError:
             if options.CONSERVATIVE_READ_STRATEGY in self.state.options:
                 return [ ], self.get_unconstrained_bytes(
@@ -609,7 +607,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             read_value = self.state.solver.If(condition, read_value, fallback)
             load_constraint = [ self.state.solver.Or(self.state.solver.And(condition, *load_constraint), self.state.solver.Not(condition)) ]
 
-        print("DOGEBAHN {} DOGEBAHN".format(read_value))
         return addrs, read_value, load_constraint
 
     def _find(self, start, what, max_search=None, max_symbolic_bytes=None, default=None, step=1,

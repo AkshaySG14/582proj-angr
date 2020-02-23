@@ -405,7 +405,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             return [ addr ]
         elif not self.state.solver.symbolic(addr):
             return [ self.state.solver.eval(addr) ]
-
+        print("LOGE {} LOGE".format(addr))
         strategies = self.write_strategies if strategies is None else strategies
         return self._apply_concretization_strategies(addr, strategies, 'store')
 
@@ -573,7 +573,9 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
 
         # get a concrete set of read addresses
         try:
-            addrs = self.concretize_read_addr(dst)
+            print("WOGE {} WOGE".format(dst))
+            addrs = self.state.solver.eval_upto(dst, 255, exact=True)
+            print("POGE {} POGE".format(addrs))
         except SimMemoryError:
             if options.CONSERVATIVE_READ_STRATEGY in self.state.options:
                 return [ ], self.get_unconstrained_bytes(
@@ -607,6 +609,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             read_value = self.state.solver.If(condition, read_value, fallback)
             load_constraint = [ self.state.solver.Or(self.state.solver.And(condition, *load_constraint), self.state.solver.Not(condition)) ]
 
+        print("DOGEBAHN {} DOGEBAHN".format(read_value))
         return addrs, read_value, load_constraint
 
     def _find(self, start, what, max_search=None, max_symbolic_bytes=None, default=None, step=1,
@@ -758,6 +761,10 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
                 self.state.add_constraints(req.size == new_size)
                 req.size = new_size
 
+        print("Moge {} Moge".format(self.state.solver.symbolic(req.addr)))
+        if not isinstance(req.addr, int) and self.state.solver.symbolic(req.addr):
+            print("\n\nWEW\n\n")
+
         if self.state.solver.symbolic(req.addr) and options.AVOID_MULTIVALUED_WRITES in self.state.options:
             return req
 
@@ -771,17 +778,10 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         #
         # First, resolve the addresses
         #
-
-        try:
-            req.actual_addresses = sorted(self.concretize_write_addr(req.addr))
-        except SimMemoryError:
-            if options.CONSERVATIVE_WRITE_STRATEGY in self.state.options:
-                return req
-            else:
-                raise
-
+        addresses = self.state.solver.eval_upto(req.addr, 255, exact=True)
+        print("LOGE {} LOGE".format(addresses))
         if type(req.addr) is not int and req.addr.symbolic:
-            conditional_constraint = self.state.solver.Or(*[ req.addr == a for a in req.actual_addresses ])
+            conditional_constraint = self.state.solver.Or(*[ req.addr == a for a in addresses ])
             if (conditional_constraint.symbolic or  # if the constraint is symbolic
                     conditional_constraint.is_false()):  # if it makes the state go unsat
                 req.constraints.append(conditional_constraint)
@@ -789,18 +789,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         #
         # Prepare memory objects
         #
-        # If we have only one address to write to we handle it as concrete, disregarding symbolic or not
-        is_size_symbolic = self.state.solver.symbolic(req.size)
-        is_addr_symbolic = self.state.solver.symbolic(req.addr)
-        if not is_size_symbolic and len(req.actual_addresses) == 1:
-            print("Doge Coin")
-            store_list = self._store_fully_concrete(req.actual_addresses[0], req.size, req.data, req.endness, req.condition)
-        elif not is_addr_symbolic:
-            store_list = self._store_symbolic_size(req.addr, req.size, req.data, req.endness, req.condition)
-        elif not is_size_symbolic:
-            store_list = self._store_symbolic_addr(req.addr, req.actual_addresses, req.size, req.data, req.endness, req.condition)
-        else:
-            store_list = self._store_fully_symbolic(req.addr, req.actual_addresses, req.size, req.data, req.endness, req.condition)
+        store_list = self._store_fully_symbolic(req.addr, addresses, req.size, req.data, req.endness, req.condition)
 
         #
         # store it!!!

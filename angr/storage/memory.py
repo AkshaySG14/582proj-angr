@@ -844,7 +844,7 @@ class SimMemory(SimStatePlugin):
                 action.actual_addrs = a
                 action.added_constraints = action._make_object(self.state.solver.And(*c)
                                                                if len(c) > 0 else self.state.solver.true)
-
+        print("CogeCoin {} CogeCoin".format(self.state.solver.eval(r)))
         return r
 
     def _constrain_underconstrained_index(self, addr_e):

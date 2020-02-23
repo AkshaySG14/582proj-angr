@@ -10,6 +10,8 @@ def main():
     state = p.factory.entry_state(args=['simple', test, length])
     simgr = p.factory.simgr(state)
 
+    state.inspect.b('address_concretization', when=angr.BP_AFTER, action=angr.BP_IPYTHON)
+
     simgr.explore(find=lambda sm: b"Woah" in sm.posix.dumps(1))
 
     if simgr.found:

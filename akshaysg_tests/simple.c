@@ -16,7 +16,7 @@ int main(int argc, char **argv)
             arr[index] = 8;
         }
     }
-    if (arr[8] == 8) {
+    if (arr[2] == 8) {
         printf("Woah\n");
     }
     return 0;

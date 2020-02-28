@@ -405,7 +405,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             return [ addr ]
         elif not self.state.solver.symbolic(addr):
             return [ self.state.solver.eval(addr) ]
-        print("LOGE {} LOGE".format(addr))
         strategies = self.write_strategies if strategies is None else strategies
         return self._apply_concretization_strategies(addr, strategies, 'store')
 
@@ -758,10 +757,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
                 self.state.add_constraints(req.size == new_size)
                 req.size = new_size
 
-        print("Moge {} Moge".format(self.state.solver.symbolic(req.addr)))
-        if not isinstance(req.addr, int) and self.state.solver.symbolic(req.addr):
-            print("\n\nWEW\n\n")
-
         if self.state.solver.symbolic(req.addr) and options.AVOID_MULTIVALUED_WRITES in self.state.options:
             return req
 
@@ -775,8 +770,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         #
         # First, resolve the addresses
         #
-        addresses = self.state.solver.eval_upto(req.addr, 255, exact=True)
-        print("LOGE {} LOGE".format(addresses))
+        addresses = sorted(self.state.solver.eval_upto(req.addr, 255, exact=True))
         if type(req.addr) is not int and req.addr.symbolic:
             conditional_constraint = self.state.solver.Or(*[ req.addr == a for a in addresses ])
             if (conditional_constraint.symbolic or  # if the constraint is symbolic
@@ -786,7 +780,16 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         #
         # Prepare memory objects
         #
-        store_list = self._store_fully_symbolic(req.addr, addresses, req.size, req.data, req.endness, req.condition)
+        is_size_symbolic = self.state.solver.symbolic(req.size)
+        is_addr_symbolic = self.state.solver.symbolic(req.addr)
+        if not is_size_symbolic and len(addresses) == 1:
+            store_list = self._store_fully_concrete(addresses[0], req.size, req.data, req.endness, req.condition)
+        elif not is_addr_symbolic:
+            store_list = self._store_symbolic_size(req.addr, req.size, req.data, req.endness, req.condition)
+        elif not is_size_symbolic:
+            store_list = self._store_symbolic_addr(req.addr, addresses, req.size, req.data, req.endness, req.condition)
+        else:
+            store_list = self._store_fully_symbolic(req.addr, addresses, req.size, req.data, req.endness, req.condition)
 
         #
         # store it!!!
@@ -929,7 +932,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         for i, segment in enumerate(segments):
             if segment['start'] <= addr < segment['start'] + segment['size']:
                 return i
-
         return -1
 
     @staticmethod

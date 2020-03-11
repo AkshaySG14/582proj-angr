@@ -791,8 +791,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         else:
             store_list = self._store_fully_symbolic(req.addr, addresses, req.size, req.data, req.endness, req.condition)
 
-        print("\n\nDOGE {} \n\nat {} DOGE\n\n".format(req.data, req.addr))
-
         #
         # store it!!!
         #
@@ -807,6 +805,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
 
                 req.stored_values.append(store_item['value'])
                 self._insert_memory_object(store_item['value'], store_item['addr'], store_item['size'])
+                print("\n\nDOGE {} \n\nat {} DOGE\n\n".format(store_item['value'], store_item['addr']))
         else:
             for store_item in store_list:
                 if req.endness == "Iend_LE" or (req.endness is None and self.endness == "Iend_LE"):
@@ -814,7 +813,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
 
                 req.stored_values.append(store_item['value'])
                 self._insert_memory_object(store_item['value'], store_item['addr'], store_item['size'])
-
+                print("\n\nDOGE {} \n\nat {} DOGE\n\n".format(store_item['value'], store_item['addr']))
         l.debug("... done")
         req.completed = True
         return req

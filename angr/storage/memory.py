@@ -491,7 +491,6 @@ class SimMemory(SimStatePlugin):
 
         addr_e = _raw_ast(addr)
         data_e = _raw_ast(data)
-        print("SIZE {} SIZE".format(size))
         size_e = 8
         condition_e = _raw_ast(condition)
         add_constraints = True if add_constraints is None else add_constraints
@@ -506,9 +505,7 @@ class SimMemory(SimStatePlugin):
             l.warning("Storing unicode string encoded as utf-8. Did you mean to use a bytestring?")
 
         # store everything as a BV
-        print("VAL BEFORE {} VAL BEFORE".format(data_e))
         data_e = self._convert_to_ast(data_e, size_e if isinstance(size_e, int) else None)
-        print("VAL AFTER {} VAL AFTER".format(data_e))
 
         # zero extend if size is greater than len(data_e)
         stored_size = size_e*self.state.arch.byte_width if isinstance(size_e, int) else self.state.arch.bits
@@ -820,10 +817,10 @@ class SimMemory(SimStatePlugin):
             self.state.uninitialized_access_handler(self.category, normalized_addresses, size, r, self.state.scratch.bbl_addr, self.state.scratch.stmt_idx)
 
         # the endianess
-        # if endness == "Iend_LE":
-        #     print("Momma {} UWUUUUUUU".format(r))
-        #     r = r.reversed
-        #     print("Momma {} UWUUUUUUU".format(r))
+        if endness == "Iend_LE":
+            r = r.reversed
+
+        # print("VAL AFTER {} VAL AFTER".format(r))
 
         if _inspect:
             if self.category == 'mem':

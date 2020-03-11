@@ -540,9 +540,8 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             dst = claripy.BVV(dst, 64)
 
         read_value = self.mem.load(dst)
-        print(read_value)
         read_value = self.state.solver.simplify(read_value)
-        print("\n\nVALUE: {} \n\nADDRESS: {}\n\n".format(read_value, dst))
+        print("\n\nDOGE {} \n\nat {} DOGE\n\n".format(read_value, [dst]))
         return [dst], read_value, []
 
     def _find(self, start, what, max_search=None, max_symbolic_bytes=None, default=None, step=1,
@@ -654,13 +653,9 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             return r, constraints, match_indices
 
     def __contains__(self, dst):
-        if isinstance(dst, int):
-            addr = dst
-        elif self.state.solver.symbolic(dst):
-            l.warning("Currently unable to do SimMemory.__contains__ on symbolic variables.")
-            return False
-        else:
-            addr = self.state.solver.eval(dst)
+        if type(dst) is int:
+            dst = claripy.BVV(dst, 64)
+        print(self.mem.contains(dst))
         return self.mem.contains(dst)
 
     def was_written_to(self, dst):
@@ -682,7 +677,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         l.debug("Doing a store...")
         req._adjust_condition(self.state)
 
-        print(self.state.solver.symbolic(req.data))
         max_bytes = req.data.length//self.state.arch.byte_width
 
         if req.size is None:
@@ -705,8 +699,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         if self.state.solver.symbolic(req.size):
             self.state.add_constraints(self.state.solver.ULE(req.size, max_bytes))
 
-        print("\n\nDOGE {} \n\nat {} DOGE\n\n".format(req.data, req.addr))
-
         #
         # store it!!!
         #
@@ -715,7 +707,12 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         if (self.category == 'mem' and options.SIMPLIFY_MEMORY_WRITES in self.state.options) or (
                 self.category == 'reg' and options.SIMPLIFY_REGISTER_WRITES in self.state.options):
             req.data = self.state.solver.simplify(req.data)
+
+        if req.endness == "Iend_LE" or (req.endness is None and self.endness == "Iend_LE"):
+            req.data = req.data.reversed
+
         self.mem.store(req.addr, req.data)
+        print("\n\nCOGE {} \n\nat {} COGE\n\n".format(req.data, req.addr))
 
         l.debug("... done")
         req.completed = True

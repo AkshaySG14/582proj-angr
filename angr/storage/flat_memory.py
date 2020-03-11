@@ -13,7 +13,7 @@ class SimFlatMemory:
     """
     Represents flat memory.
     """
-    def __init__(self, memory_backer=None, permissions_backer=None, memory_array=None, initialized=None, name_mapping=None, hash_mapping=None, check_permissions=False):
+    def __init__(self, memory_backer=None, permissions_backer=None, memory_array=None, addrs=None, initialized=None, name_mapping=None, hash_mapping=None, check_permissions=False):
         self._cowed = set()
         self._memory_backer = { } if memory_backer is None else memory_backer
         self._permissions_backer = permissions_backer # saved for copying
@@ -30,7 +30,7 @@ class SimFlatMemory:
         self._updated_mappings = set()
 
         self.memory_array = claripy.ArrayV(64, claripy.BVV(0, 64)) if memory_array is None else memory_array
-        self.addrs = set()
+        self.addrs = set() if addrs is None else addrs
 
     def __getstate__(self):
         return {
@@ -60,10 +60,12 @@ class SimFlatMemory:
         self._cowed = set()
         m = SimFlatMemory(memory_backer=self._memory_backer,
                           permissions_backer=self._permissions_backer,
-                           initialized=set(self._initialized),
-                           name_mapping=new_name_mapping,
-                           hash_mapping=new_hash_mapping,
-                           check_permissions=self._check_perms)
+                          initialized=set(self._initialized),
+                          memory_array=self.memory_array,
+                          addrs=self.addrs,
+                          name_mapping=new_name_mapping,
+                          hash_mapping=new_hash_mapping,
+                          check_permissions=self._check_perms)
         m._preapproved_stack = self._preapproved_stack
         return m
 
@@ -108,7 +110,6 @@ class SimFlatMemory:
         """
         self.addrs.add(addr)
         self.memory_array = claripy.Store(self.memory_array, addr, val)
-        print(self.memory_array)
 
     def contains(self, addr):
         """
@@ -117,4 +118,6 @@ class SimFlatMemory:
         :param addr: Address to store in.
         :param val: Bit vector value to be stored
         """
+        print(addr)
+        print(self.addrs)
         return addr in self.addrs

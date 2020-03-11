@@ -606,6 +606,8 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             read_value = self.state.solver.If(condition, read_value, fallback)
             load_constraint = [ self.state.solver.Or(self.state.solver.And(condition, *load_constraint), self.state.solver.Not(condition)) ]
 
+        print("\n\nDOGE {} \n\nat {} DOGE\n\n".format(read_value, addrs))
+
         return addrs, read_value, load_constraint
 
     def _find(self, start, what, max_search=None, max_symbolic_bytes=None, default=None, step=1,
@@ -805,15 +807,15 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
 
                 req.stored_values.append(store_item['value'])
                 self._insert_memory_object(store_item['value'], store_item['addr'], store_item['size'])
-                print("\n\nDOGE {} \n\nat {} DOGE\n\n".format(store_item['value'], store_item['addr']))
+                print("\n\nCOGE {} \n\nat {} COGE\n\n".format(store_item['value'], store_item['addr']))
         else:
             for store_item in store_list:
                 if req.endness == "Iend_LE" or (req.endness is None and self.endness == "Iend_LE"):
                     store_item['value'] = store_item['value'].reversed
+                print("\n\nCOGE {} \n\nat {} COGE\n\n".format(store_item['value'], store_item['addr']))
 
                 req.stored_values.append(store_item['value'])
                 self._insert_memory_object(store_item['value'], store_item['addr'], store_item['size'])
-                print("\n\nDOGE {} \n\nat {} DOGE\n\n".format(store_item['value'], store_item['addr']))
         l.debug("... done")
         req.completed = True
         return req

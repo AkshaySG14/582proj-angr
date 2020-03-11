@@ -412,9 +412,9 @@ class SimMemory(SimStatePlugin):
         if len(bits) > 64:
             data_e = data_e.get_bytes(0, 8)
         else:
-            data_e = data_e.zero_extend(64 - len(bits))
+            data_e = claripy.SignExt(64 - len(bits), data_e)
 
-        return data_e
+        return self.state.solver.simplify(data_e)
 
     def set_stack_address_mapping(self, absolute_address, region_id, related_function_address=None):
         """

@@ -411,10 +411,9 @@ class SimMemory(SimStatePlugin):
         bits = data_e[:]
         if len(bits) > 64:
             data_e = data_e.get_bytes(0, 8)
-        else:
-            data_e = data_e.zero_extend(64 - len(bits))
-
-        return data_e
+        if len(bits) < 64:
+            data_e = claripy.SignExt(64 - len(bits), data_e)
+        return self.state.solver.simplify(data_e)
 
     def set_stack_address_mapping(self, absolute_address, region_id, related_function_address=None):
         """
@@ -491,8 +490,7 @@ class SimMemory(SimStatePlugin):
 
         addr_e = _raw_ast(addr)
         data_e = _raw_ast(data)
-        print("SIZE {} SIZE".format(size))
-        size_e = 8
+        size_e = _raw_ast(size)
         condition_e = _raw_ast(condition)
         add_constraints = True if add_constraints is None else add_constraints
 
@@ -500,15 +498,16 @@ class SimMemory(SimStatePlugin):
             named_addr, named_size = self._resolve_location_name(addr, is_write=True)
             addr = named_addr
             addr_e = addr
+            if size is None:
+                size = named_size
+                size_e = size
 
         if isinstance(data_e, str):
             data_e = data_e.encode()
             l.warning("Storing unicode string encoded as utf-8. Did you mean to use a bytestring?")
 
         # store everything as a BV
-        print("VAL BEFORE {} VAL BEFORE".format(data_e))
         data_e = self._convert_to_ast(data_e, size_e if isinstance(size_e, int) else None)
-        print("VAL AFTER {} VAL AFTER".format(data_e))
 
         # zero extend if size is greater than len(data_e)
         stored_size = size_e*self.state.arch.byte_width if isinstance(size_e, int) else self.state.arch.bits
@@ -526,7 +525,6 @@ class SimMemory(SimStatePlugin):
         if len(data_e) % self.state.arch.byte_width != 0:
             raise SimMemoryError("Attempting to store non-byte data to memory")
         if not size_e.symbolic and (len(data_e) < size_e*self.state.arch.byte_width).is_true():
-            print("ERROR {} ERROR".format(data_e))
             raise SimMemoryError("Provided data is too short for this memory store")
 
         if _inspect:
@@ -576,7 +574,7 @@ class SimMemory(SimStatePlugin):
 
         request = MemoryStoreRequest(addr_e, data=data_e, size=size_e, condition=condition_e, endness=endness)
         try:
-            self._store(request) #will use state_plugins/flat_memory.py
+            self._store(request) #will use state_plugins/symbolic_memory.py
         except SimSegfaultError as e:
             e.original_addr = addr_e
             raise
@@ -820,10 +818,8 @@ class SimMemory(SimStatePlugin):
             self.state.uninitialized_access_handler(self.category, normalized_addresses, size, r, self.state.scratch.bbl_addr, self.state.scratch.stmt_idx)
 
         # the endianess
-        # if endness == "Iend_LE":
-        #     print("Momma {} UWUUUUUUU".format(r))
-        #     r = r.reversed
-        #     print("Momma {} UWUUUUUUU".format(r))
+        if endness == "Iend_LE":
+            r = r.reversed
 
         if _inspect:
             if self.category == 'mem':
@@ -853,7 +849,6 @@ class SimMemory(SimStatePlugin):
                 action.actual_addrs = a
                 action.added_constraints = action._make_object(self.state.solver.And(*c)
                                                                if len(c) > 0 else self.state.solver.true)
-
         return r
 
     def _constrain_underconstrained_index(self, addr_e):

@@ -607,7 +607,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             load_constraint = [ self.state.solver.Or(self.state.solver.And(condition, *load_constraint), self.state.solver.Not(condition)) ]
 
         print("\n\nDOGE {} \n\nat {} DOGE\n\n".format(read_value, addrs))
-
+        print(self.mem)
         return addrs, read_value, load_constraint
 
     def _find(self, start, what, max_search=None, max_symbolic_bytes=None, default=None, step=1,
@@ -808,12 +808,13 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
                 req.stored_values.append(store_item['value'])
                 self._insert_memory_object(store_item['value'], store_item['addr'], store_item['size'])
                 print("\n\nCOGE {} \n\nat {} COGE\n\n".format(store_item['value'], store_item['addr']))
+                print(self.mem)
         else:
             for store_item in store_list:
                 if req.endness == "Iend_LE" or (req.endness is None and self.endness == "Iend_LE"):
                     store_item['value'] = store_item['value'].reversed
                 print("\n\nCOGE {} \n\nat {} COGE\n\n".format(store_item['value'], store_item['addr']))
-
+                print(self.mem)
                 req.stored_values.append(store_item['value'])
                 self._insert_memory_object(store_item['value'], store_item['addr'], store_item['size'])
         l.debug("... done")

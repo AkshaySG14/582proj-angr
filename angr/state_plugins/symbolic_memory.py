@@ -37,7 +37,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         endness=None, abstract_backer=False, check_permissions=None,
         read_strategies=None, write_strategies=None, stack_region_map=None, generic_region_map=None
     ):
-        print("\n\n\n CREATING \n\n\n")
         SimMemory.__init__(self,
                            endness=endness,
                            abstract_backer=abstract_backer,

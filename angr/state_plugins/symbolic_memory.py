@@ -542,7 +542,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
 
         read_value = self.mem.load(dst)
         read_value = self.state.solver.simplify(read_value)
-        print("\n\nDOGE {} \n\nat {} DOGE\n\n".format(read_value, [dst]))
+        print("\n\nDOGE {} with size {} \n\nat {} DOGE\n\n".format(read_value, size, [dst]))
         print(self.mem)
         return [dst], read_value, []
 
@@ -714,7 +714,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             req.data = req.data.reversed
 
         self.mem.store(req.addr, req.data)
-        print("\n\nCOGE {} \n\nat {} COGE\n\n".format(req.data, req.addr))
+        print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(req.data, req.size, req.addr))
         print(self.mem)
 
         l.debug("... done")

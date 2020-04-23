@@ -37,6 +37,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         endness=None, abstract_backer=False, check_permissions=None,
         read_strategies=None, write_strategies=None, stack_region_map=None, generic_region_map=None
     ):
+        print("\n\n\n CREATING \n\n\n")
         SimMemory.__init__(self,
                            endness=endness,
                            abstract_backer=abstract_backer,
@@ -542,6 +543,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         read_value = self.mem.load(dst)
         read_value = self.state.solver.simplify(read_value)
         print("\n\nDOGE {} \n\nat {} DOGE\n\n".format(read_value, [dst]))
+        print(self.mem)
         return [dst], read_value, []
 
     def _find(self, start, what, max_search=None, max_symbolic_bytes=None, default=None, step=1,
@@ -713,6 +715,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
 
         self.mem.store(req.addr, req.data)
         print("\n\nCOGE {} \n\nat {} COGE\n\n".format(req.data, req.addr))
+        print(self.mem)
 
         l.debug("... done")
         req.completed = True

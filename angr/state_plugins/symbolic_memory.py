@@ -807,13 +807,13 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
 
                 req.stored_values.append(store_item['value'])
                 self._insert_memory_object(store_item['value'], store_item['addr'], store_item['size'])
-                print("\n\nCOGE {} with size \n\nat {} COGE\n\n".format(store_item['value'], req.size, store_item['addr']))
+                print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(store_item['value'], req.size, store_item['addr']))
                 print(self.mem)
         else:
             for store_item in store_list:
                 if req.endness == "Iend_LE" or (req.endness is None and self.endness == "Iend_LE"):
                     store_item['value'] = store_item['value'].reversed
-                print("\n\nCOGE {} with size \n\nat {} COGE\n\n".format(store_item['value'], req.size, store_item['addr']))
+                print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(store_item['value'], req.size, store_item['addr']))
                 print(self.mem)
                 req.stored_values.append(store_item['value'])
                 self._insert_memory_object(store_item['value'], store_item['addr'], store_item['size'])

@@ -606,8 +606,8 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             read_value = self.state.solver.If(condition, read_value, fallback)
             load_constraint = [ self.state.solver.Or(self.state.solver.And(condition, *load_constraint), self.state.solver.Not(condition)) ]
 
-        print("\n\nDOGE {} with size {} \n\nat {} DOGE\n\n".format(read_value, size, addrs))
-        print(self.mem)
+        print_addr = [claripy.BVV(addr, 64) if type(addr) is int else addr for addr in addrs]
+        print("\n\nDOGE {} with size {} \n\nat {} DOGE\n\n".format(read_value, size, print_addr))
         return addrs, read_value, load_constraint
 
     def _find(self, start, what, max_search=None, max_symbolic_bytes=None, default=None, step=1,
@@ -807,14 +807,15 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
 
                 req.stored_values.append(store_item['value'])
                 self._insert_memory_object(store_item['value'], store_item['addr'], store_item['size'])
-                print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(store_item['value'], req.size, store_item['addr']))
-                print(self.mem)
+                print_addr = claripy.BVV(store_item['addr'], 64) if type(store_item['addr']) is int else store_item['addr']
+
+                print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(store_item['value'], req.size, print_addr))
         else:
             for store_item in store_list:
                 if req.endness == "Iend_LE" or (req.endness is None and self.endness == "Iend_LE"):
                     store_item['value'] = store_item['value'].reversed
-                print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(store_item['value'], req.size, store_item['addr']))
-                print(self.mem)
+                print_addr = claripy.BVV(store_item['addr'], 64) if type(store_item['addr']) is int else store_item['addr']
+                print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(store_item['value'], req.size, print_addr))
                 req.stored_values.append(store_item['value'])
                 self._insert_memory_object(store_item['value'], store_item['addr'], store_item['size'])
         l.debug("... done")

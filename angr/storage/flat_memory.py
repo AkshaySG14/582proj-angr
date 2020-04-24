@@ -4,6 +4,7 @@ import logging
 
 from .. import sim_options as options
 from .memory_object import SimMemoryObject
+from .paged_memory import  SimPagedMemory
 
 l = logging.getLogger(name=__name__)
 
@@ -13,24 +14,22 @@ class SimFlatMemory:
     """
     Represents flat memory.
     """
-    def __init__(self, memory_backer=None, permissions_backer=None, memory_array=None, addrs=None, initialized=None, name_mapping=None, hash_mapping=None, check_permissions=False):
-        self._cowed = set()
+    def __init__(self, memory_backer=None, permissions_backer=None, check_permissions=None, memory_array=None,
+                 addrs=None, paged_memory=None):
         self._memory_backer = { } if memory_backer is None else memory_backer
         self._permissions_backer = permissions_backer # saved for copying
         self._executable_pages = False if permissions_backer is None else permissions_backer[0]
         self._permission_map = { } if permissions_backer is None else permissions_backer[1]
-        self._initialized = set() if initialized is None else initialized
         self.state = None
-        self._preapproved_stack = range(0)
         self._check_perms = check_permissions
 
         # reverse mapping
-        self._name_mapping = ChainMap() if name_mapping is None else name_mapping
-        self._hash_mapping = ChainMap() if hash_mapping is None else hash_mapping
         self._updated_mappings = set()
 
         self.memory_array = claripy.ArrayV(64, claripy.BVV(0, 64)) if memory_array is None else memory_array
         self.addrs = set() if addrs is None else addrs
+        self.paged_memory = SimPagedMemory(memory_backer=memory_backer, permissions_backer=permissions_backer,
+                                           check_permissions=check_permissions) if paged_memory is None else paged_memory
 
     def __getstate__(self):
         return {
@@ -38,15 +37,10 @@ class SimFlatMemory:
             '_permissions_backer': self._permissions_backer,
             '_executable_pages': self._executable_pages,
             '_permission_map': self._permission_map,
-            '_pages': self._pages,
-            '_initialized': self._initialized,
-            '_page_size': self._page_size,
+            'memory_array': self.memory_array,
+            'addrs': self.addrs,
+            'paged_memory': self.paged_memory,
             'state': None,
-            '_name_mapping': self._name_mapping,
-            '_hash_mapping': self._hash_mapping,
-            '_symbolic_addrs': self._symbolic_addrs,
-            '_preapproved_stack': self._preapproved_stack,
-            '_check_perms': self._check_perms
         }
 
     def __setstate__(self, s):
@@ -54,19 +48,14 @@ class SimFlatMemory:
         self.__dict__.update(s)
 
     def branch(self):
-        new_name_mapping = self._name_mapping.new_child() if options.REVERSE_MEMORY_NAME_MAP in self.state.options else self._name_mapping
-        new_hash_mapping = self._hash_mapping.new_child() if options.REVERSE_MEMORY_HASH_MAP in self.state.options else self._hash_mapping
+        # Bad, hacky fix. Need some way to figure out how to convey state.
+        self.paged_memory.state = self.state
 
-        self._cowed = set()
         m = SimFlatMemory(memory_backer=self._memory_backer,
                           permissions_backer=self._permissions_backer,
-                          initialized=set(self._initialized),
                           memory_array=self.memory_array,
-                          addrs=self.addrs,
-                          name_mapping=new_name_mapping,
-                          hash_mapping=new_hash_mapping,
-                          check_permissions=self._check_perms)
-        m._preapproved_stack = self._preapproved_stack
+                          paged_memory=self.paged_memory.branch(),
+                          addrs=self.addrs,)
         return m
 
     def __getitem__(self, addr):
@@ -118,6 +107,134 @@ class SimFlatMemory:
         :param addr: Address to store in.
         :param val: Bit vector value to be stored
         """
-        print(addr)
-        print(self.addrs)
         return addr in self.addrs
+
+    def _mark_updated_mapping(self, d, m):
+        print("Should not occur")
+        self.paged_memory._mark_updated_mapping(d, m)
+
+    def _update_range_mappings(self, actual_addr, cnt, size):
+        print("Should not occur")
+        self.paged_memory._update_range_mappings(actual_addr, cnt, size)
+
+    def _update_mappings(self, actual_addr, cnt):
+        print("Should not occur")
+        self.paged_memory._update_mappings(actual_addr, cnt)
+
+    def get_symbolic_addrs(self):
+        print("WEW9")
+        return self.paged_memory.get_symbolic_addrs()
+
+    def addrs_for_name(self, n):
+        print("WEW8")
+        return self.paged_memory.addrs_for_name(n)
+
+    def addrs_for_hash(self, h):
+        print("WEW7")
+        return self.paged_memory.addrs_for_hash(h)
+
+    def memory_objects_for_name(self, n):
+        print("WEW6")
+        return self.paged_memory.memory_objects_for_name(n)
+
+    def memory_objects_for_hash(self, n):
+        print("WEW4")
+        return self.paged_memory.memory_objects_for_hash(n)
+
+    def permissions(self, addr, permissions=None):
+        return self.state.solver.BVV(1, 3)
+        # Bad, hacky fix. Need some way to figure out how to convey state.
+        self.paged_memory.state = self.state
+        return self.paged_memory.permissions(addr, permissions)
+
+    def map_region(self, addr, length, permissions, init_zero=False):
+        print("WEW1")
+        self.paged_memory.map_region(addr, length, permissions, init_zero)
+
+    def unmap_region(self, addr, length):
+        print("WEW2")
+        self.paged_memory.unmap_region(addr, length)
+
+    def flush_pages(self, white_list):
+        print("WEW3")
+        return self.paged_memory.flush_pages(white_list)
+
+    def store_memory_object(self, mo, overwrite=True):
+        """
+        This function optimizes a large store by storing a single reference to the :class:`SimMemoryObject` instead of
+        one for each byte.
+
+        :param mo: the memory object to store
+        """
+        print("wooh3")
+        self.paged_memory.store_memory_object(mo, overwrite)
+
+    def replace_memory_object(self, old, new_content):
+        """
+        Replaces the memory object `old` with a new memory object containing `new_content`.
+
+        :param old:         A SimMemoryObject (i.e., one from :func:`memory_objects_for_hash()` or :func:`
+                            memory_objects_for_name()`).
+        :param new_content: The content (claripy expression) for the new memory object.
+        :returns: the new memory object
+        """
+        print("wooh1")
+        return self.paged_memory.replace_memory_object(old, new_content)
+
+    def replace_all(self, old, new):
+        """
+        Replaces all instances of expression `old` with expression `new`.
+
+        :param old: A claripy expression. Must contain at least one named variable (to make it possible to use the
+                    name index for speedup).
+        :param new: The new variable to replace it with.
+        """
+        print("wooh2")
+        self.paged_memory.replace_all(old, new)
+
+    def contains_no_backer(self, addr):
+        """
+        Tests if the address is contained in any page of paged memory, without considering memory backers.
+
+        :param int addr: The address to test.
+        :return: True if the address is included in one of the pages, False otherwise.
+        :rtype: bool
+        """
+        print("wooh4")
+        return self.paged_memory.contains_no_backer(addr)
+
+    def keys(self):
+        print("wooh5")
+        return self.paged_memory.keys()
+
+    def __len__(self):
+        print("wooh6")
+        return len(self.addrs)
+
+    def changed_bytes(self, other):
+        print("wooh7")
+        return self.paged_memory.changed_bytes(other)
+
+    @property
+    def allow_segv(self):
+        print("wooh8")
+        return self.paged_memory.allow_segv
+
+    @property
+    def byte_width(self):
+        print("wooh9")
+        return self.paged_memory.byte_width
+
+    def load_objects(self, addr, num_bytes, ret_on_segv=False):
+        print("wooh10")
+        """
+        Load memory objects from paged memory.
+
+        :param addr: Address to start loading.
+        :param num_bytes: Number of bytes to load.
+        :param bool ret_on_segv: True if you want load_bytes to return directly when a SIGSEV is triggered, otherwise
+                                 a SimSegfaultError will be raised.
+        :return: list of tuples of (addr, memory_object)
+        :rtype: tuple
+        """
+        return self.paged_memory.load_objects(addr, num_bytes, ret_on_segv)

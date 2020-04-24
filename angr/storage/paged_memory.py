@@ -73,6 +73,7 @@ class BasePage:
         :param new_mo: the memory object
         :param overwrite: whether to overwrite objects already in memory (if false, just fill in the holes)
         """
+        print(new_mo)
         start, end = self._resolve_range(new_mo)
         if overwrite:
             self.store_overwrite(state, new_mo, start, end)

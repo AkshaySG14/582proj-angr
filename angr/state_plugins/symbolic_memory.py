@@ -97,7 +97,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         """
         Merge this SimMemory with the other SimMemory
         """
-
         changed_bytes = self._changes_to_merge(others)
 
         l.info("Merging %d bytes", len(changed_bytes))
@@ -538,6 +537,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
 
         if type(dst) is int:
             dst = claripy.BVV(dst, 64)
+        dst = claripy.SignExt(64 - len(dst), dst)
 
         read_value = self.mem.load(dst)
         read_value = self.state.solver.simplify(read_value)
@@ -657,7 +657,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
     def __contains__(self, dst):
         if type(dst) is int:
             dst = claripy.BVV(dst, 64)
-        print(self.mem.contains(dst))
         return self.mem.contains(dst)
 
     def was_written_to(self, dst):
@@ -706,6 +705,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         #
         if type(req.addr) is int:
             req.addr = claripy.BVV(req.addr, 64)
+        req.addr = claripy.SignExt(64 - len(req.addr), req.addr)
         if (self.category == 'mem' and options.SIMPLIFY_MEMORY_WRITES in self.state.options) or (
                 self.category == 'reg' and options.SIMPLIFY_REGISTER_WRITES in self.state.options):
             req.data = self.state.solver.simplify(req.data)
@@ -971,7 +971,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
                     execution so that we can track the allocation depth.
         :return: The generated variable
         """
-
         if self.category == 'mem' and options.ZERO_FILL_UNCONSTRAINED_MEMORY in self.state.options:
             return self.state.solver.BVV(0, bits)
         elif self.category == 'reg' and options.ZERO_FILL_UNCONSTRAINED_REGISTERS in self.state.options:

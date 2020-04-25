@@ -572,7 +572,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         if self.state.solver.symbolic(dst) and options.AVOID_MULTIVALUED_READS in self.state.options:
             return [ ], self.get_unconstrained_bytes("symbolic_read_unconstrained", size*self.state.arch.byte_width), [ ]
 
-        print(dst)
         # get a concrete set of read addresses
         try:
             addrs = self.state.solver.eval_upto(dst, 255, exact=True)
@@ -823,7 +822,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
                 self._insert_memory_object(store_item['value'], store_item['addr'], store_item['size'])
         l.debug("... done")
         req.completed = True
-        print(self.mem)
         return req
 
     def _insert_memory_object(self, value, address, size):

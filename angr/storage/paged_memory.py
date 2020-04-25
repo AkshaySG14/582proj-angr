@@ -557,6 +557,10 @@ class SimPagedMemory:
                             relevant_data,
                             relevant_region_start,
                             byte_width=self.byte_width)
+
+                    import inspect
+                    print('caller name:', inspect.stack()[1][3])
+
                     print(relevant_region_start)
                     print(relevant_region_end)
                     print(relevant_data)
@@ -607,6 +611,8 @@ class SimPagedMemory:
         return initialized
 
     def _get_page(self, page_num, write=False, create=False, initialize=True):
+        import inspect
+        print('caller name:', inspect.stack()[1][3])
         page_addr = page_num * self._page_size
         try:
             page = self._pages[page_num]

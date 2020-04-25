@@ -457,7 +457,6 @@ class SimPagedMemory:
         :return: list of tuples of (addr, memory_object)
         :rtype: tuple
         """
-        print("WEWEWEW")
         result = [ ]
         end = addr + num_bytes
         for page_addr in self._containing_pages(addr, end):
@@ -503,7 +502,6 @@ class SimPagedMemory:
         return pg
 
     def _initialize_page(self, n, new_page):
-        print("Poge Coge Roge Moge")
         if n in self._initialized:
             return False
         self._initialized.add(n)
@@ -609,7 +607,6 @@ class SimPagedMemory:
         return initialized
 
     def _get_page(self, page_num, write=False, create=False, initialize=True):
-        print("WOWZA")
         page_addr = page_num * self._page_size
         try:
             page = self._pages[page_num]

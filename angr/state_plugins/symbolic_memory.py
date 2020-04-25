@@ -721,7 +721,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
     def _insert_memory_object(self, value, address, size):
         if self.category == 'mem':
             self.state.scratch.dirty_addrs.update(range(address, address+size))
-        self.mem.store(address, value)
+        self.mem.store(address, value, size)
 
     def _store_fully_concrete(self, address, size, data, endness, condition):
         if type(size) is not int:

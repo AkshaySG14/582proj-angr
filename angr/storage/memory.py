@@ -408,7 +408,7 @@ class SimMemory(SimStatePlugin):
         else:
             data_e = data_e.raw_to_bv()
 
-        return self.state.solver.simplify(data_e)
+        return data_e
 
     def set_stack_address_mapping(self, absolute_address, region_id, related_function_address=None):
         """
@@ -463,13 +463,10 @@ class SimMemory(SimStatePlugin):
               inspect=True, priv=None, disable_actions=False):
         """
         Stores content into memory.
-
         :param addr:        A claripy expression representing the address to store at.
         :param data:        The data to store (claripy expression or something convertable to a claripy expression).
         :param size:        A claripy expression representing the size of the data to store.
-
         The following parameters are optional.
-
         :param condition:       A claripy expression representing a condition if the store is conditional.
         :param add_constraints: Add constraints resulting from the merge (default: True).
         :param endness:         The endianness for the data.
@@ -493,6 +490,9 @@ class SimMemory(SimStatePlugin):
             named_addr, named_size = self._resolve_location_name(addr, is_write=True)
             addr = named_addr
             addr_e = addr
+            if size is None:
+                size = named_size
+                size_e = size
 
         if isinstance(data_e, str):
             data_e = data_e.encode()
@@ -517,7 +517,6 @@ class SimMemory(SimStatePlugin):
         if len(data_e) % self.state.arch.byte_width != 0:
             raise SimMemoryError("Attempting to store non-byte data to memory")
         if not size_e.symbolic and (len(data_e) < size_e*self.state.arch.byte_width).is_true():
-            print("ERROR {} ERROR".format(data_e))
             raise SimMemoryError("Provided data is too short for this memory store")
 
         if _inspect:
@@ -567,7 +566,7 @@ class SimMemory(SimStatePlugin):
 
         request = MemoryStoreRequest(addr_e, data=data_e, size=size_e, condition=condition_e, endness=endness)
         try:
-            self._store(request) #will use state_plugins/flat_memory.py
+            self._store(request) #will use state_plugins/symbolic_memory.py
         except SimSegfaultError as e:
             e.original_addr = addr_e
             raise

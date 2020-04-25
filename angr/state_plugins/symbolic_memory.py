@@ -517,7 +517,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         return default_mo
 
     def _read_from(self, addr, num_bytes, inspect=True, events=True, ret_on_segv=False):
-        return self.mem.load(addr)
+        return self.mem.load(addr, num_bytes)
 
     def _load(self, dst, size, condition=None, fallback=None, inspect=True, events=True, ret_on_segv=False):
         if self.state.solver.symbolic(size):

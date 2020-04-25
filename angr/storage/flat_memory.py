@@ -91,7 +91,7 @@ class SimFlatMemory:
         """
         ret = self.state.solver.simplify(self.memory_array[addr])
         for byte in range(1, size):
-            ret = self.state.solver.simplify(self.memory_array[addr + byte]).concat(ret)
+            ret = ret.concat(self.state.solver.simplify(self.memory_array[addr + byte]))
         return ret
 
     def store(self, addr, val, size):
@@ -104,8 +104,9 @@ class SimFlatMemory:
         """
         # TODO: Fix incorrect behavior of addrs
         self.addrs.add(addr)
+        start_addr = addr + size - 1
         for byte in range(0, size):
-            self.memory_array = claripy.Store(self.memory_array, addr + byte,
+            self.memory_array = claripy.Store(self.memory_array, start_addr - byte,
                                               val[(byte + 1) * self.byte_width - 1:byte * self.byte_width])
 
     def contains(self, addr):

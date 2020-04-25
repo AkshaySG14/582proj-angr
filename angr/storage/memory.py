@@ -22,7 +22,6 @@ class AddressWrapper(object):
     def __init__(self, region, region_base_addr, address, is_on_stack, function_address):
         """
         Constructor for the class AddressWrapper.
-
         :param str region:             Name of the memory regions it belongs to.
         :param int region_base_addr:   Base address of the memory region
         :param address:                An address (not a ValueSet object).
@@ -47,7 +46,6 @@ class AddressWrapper(object):
     def to_valueset(self, state):
         """
         Convert to a ValueSet instance
-
         :param state: A state
         :return: The converted ValueSet instance
         """
@@ -77,7 +75,6 @@ class RegionMap(object):
     def __init__(self, is_stack):
         """
         Constructor
-
         :param is_stack:    Whether this is a region map for stack frames or not. Different strategies apply for stack
                             regions.
         """
@@ -130,7 +127,6 @@ class RegionMap(object):
         """
         Add a mapping between an absolute address and a region ID. If this is a stack region map, all stack regions
         beyond (lower than) this newly added regions will be discarded.
-
         :param absolute_address:            An absolute memory address.
         :param region_id:                   ID of the memory region.
         :param related_function_address:    A related function address, mostly used for stack regions.
@@ -173,7 +169,6 @@ class RegionMap(object):
     def unmap_by_address(self, absolute_address):
         """
         Removes a mapping based on its absolute address.
-
         :param absolute_address: An absolute address
         """
 
@@ -184,7 +179,6 @@ class RegionMap(object):
     def absolutize(self, region_id, relative_address):
         """
         Convert a relative address in some memory region to an absolute address.
-
         :param region_id:           The memory region ID
         :param relative_address:    The relative memory offset in that memory region
         :return:                    An absolute address if converted, or an exception is raised when region id does not
@@ -204,12 +198,10 @@ class RegionMap(object):
     def relativize(self, absolute_address, target_region_id=None):
         """
         Convert an absolute address to the memory offset in a memory region.
-
         Note that if an address belongs to heap region is passed in to a stack region map, it will be converted to an
         offset included in the closest stack frame, and vice versa for passing a stack address to a heap region.
         Therefore you should only pass in address that belongs to the same category (stack or non-stack) of this region
         map.
-
         :param absolute_address:    An absolute memory address
         :return:                    A tuple of the closest region ID, the relative offset, and the related function
                                     address.
@@ -341,7 +333,6 @@ class SimMemory(SimStatePlugin):
     def set_state(self, state):
         """
         Call the set_state method in SimStatePlugin class, and then perform the delayed initialization.
-
         :param state: The SimState instance
         """
         SimStatePlugin.set_state(self, state)
@@ -408,18 +399,12 @@ class SimMemory(SimStatePlugin):
         else:
             data_e = data_e.raw_to_bv()
 
-        bits = data_e[:]
-        if len(bits) > 64:
-            data_e = data_e.get_bytes(0, 8)
-        if len(bits) < 64:
-            data_e = claripy.SignExt(64 - len(bits), data_e)
-        return self.state.solver.simplify(data_e)
+        return data_e
 
     def set_stack_address_mapping(self, absolute_address, region_id, related_function_address=None):
         """
         Create a new mapping between an absolute address (which is the base address of a specific stack frame) and a
         region ID.
-
         :param absolute_address: The absolute memory address.
         :param region_id: The region ID.
         :param related_function_address: Related function address.
@@ -431,7 +416,6 @@ class SimMemory(SimStatePlugin):
     def unset_stack_address_mapping(self, absolute_address):
         """
         Remove a stack mapping.
-
         :param absolute_address: An absolute memory address, which is the base address of the stack frame to destroy.
         """
         if self._stack_region_map is None:
@@ -443,10 +427,8 @@ class SimMemory(SimStatePlugin):
         Return a memory region ID for a function. If the default region ID exists in the region mapping, an integer
         will appended to the region name. In this way we can handle recursive function calls, or a function that
         appears more than once in the call frame.
-
         This also means that `stack_id()` should only be called when creating a new stack frame for a function. You are
         not supposed to call this function every time you want to map a function address to a stack ID.
-
         :param int function_address: Address of the function.
         :return: ID of the new memory region.
         :rtype: str
@@ -468,13 +450,10 @@ class SimMemory(SimStatePlugin):
               inspect=True, priv=None, disable_actions=False):
         """
         Stores content into memory.
-
         :param addr:        A claripy expression representing the address to store at.
         :param data:        The data to store (claripy expression or something convertable to a claripy expression).
         :param size:        A claripy expression representing the size of the data to store.
-
         The following parameters are optional.
-
         :param condition:       A claripy expression representing a condition if the store is conditional.
         :param add_constraints: Add constraints resulting from the merge (default: True).
         :param endness:         The endianness for the data.
@@ -617,14 +596,11 @@ class SimMemory(SimStatePlugin):
     def store_cases(self, addr, contents, conditions, fallback=None, add_constraints=None, endness=None, action=None):
         """
         Stores content into memory, conditional by case.
-
         :param addr:            A claripy expression representing the address to store at.
         :param contents:        A list of bitvectors, not necessarily of the same size. Use None to denote an empty
                                 write.
         :param conditions:      A list of conditions. Must be equal in length to contents.
-
         The following parameters are optional.
-
         :param fallback:        A claripy expression representing what the write should resolve to if all conditions
                                 evaluate to false (default: whatever was there before).
         :param add_constraints: Add constraints resulting from the merge (default: True)
@@ -715,7 +691,6 @@ class SimMemory(SimStatePlugin):
              inspect=True, disable_actions=False, ret_on_segv=False):
         """
         Loads size bytes from dst.
-
         :param addr:             The address to load from.
         :param size:            The size (in bytes) of the load.
         :param condition:       A claripy expression representing a condition for a conditional load.
@@ -727,15 +702,11 @@ class SimMemory(SimStatePlugin):
         :param bool disable_actions: Whether this store should avoid creating SimActions or not. When set to False,
                                      state options are respected.
         :param bool ret_on_segv: Whether returns the memory that is already loaded before a segmentation fault is triggered. The default is False.
-
         There are a few possible return values. If no condition or fallback are passed in,
         then the return is the bytes at the address, in the form of a claripy expression.
         For example:
-
             <A BVV(0x41, 32)>
-
         On the other hand, if a condition and fallback are provided, the value is conditional:
-
             <A If(condition, BVV(0x41, 32), fallback)>
         """
 
@@ -876,7 +847,6 @@ class SimMemory(SimStatePlugin):
         """
         Returns the address of bytes equal to 'what', starting from 'start'. Note that,  if you don't specify a default
         value, this search could cause the state to go unsat if no possible matching byte exists.
-
         :param addr:               The start address.
         :param what:                What to search for;
         :param max_search:          Search at most this many bytes.
@@ -885,7 +855,6 @@ class SimMemory(SimStatePlugin):
         :param step:                The stride that the search should use while scanning memory
         :param disable_actions:     Whether to inhibit the creation of SimActions for memory access
         :param inspect:             Whether to trigger SimInspect breakpoints
-
         :returns:                   An expression representing the address of the matching byte.
         """
         addr = _raw_ast(addr)
@@ -911,12 +880,9 @@ class SimMemory(SimStatePlugin):
                       disable_actions=False):
         """
         Copies data within a memory.
-
         :param dst:         A claripy expression representing the address of the destination
         :param src:         A claripy expression representing the address of the source
-
         The following parameters are optional.
-
         :param src_memory:  Copy data from this SimMemory instead of self
         :param src_memory:  Copy data to this SimMemory instead of self
         :param size:        A claripy expression representing the size of the copy

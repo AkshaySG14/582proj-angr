@@ -812,13 +812,13 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
                 self._insert_memory_object(store_item['value'], store_item['addr'], store_item['size'])
                 print_addr = claripy.BVV(store_item['addr'], 64) if type(store_item['addr']) is int else store_item['addr']
 
-                print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(store_item['value'], req.size, print_addr))
+                print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(store_item['value'], self.state.solver.eval(req.size), print_addr))
         else:
             for store_item in store_list:
                 if req.endness == "Iend_LE" or (req.endness is None and self.endness == "Iend_LE"):
                     store_item['value'] = store_item['value'].reversed
                 print_addr = claripy.BVV(store_item['addr'], 64) if type(store_item['addr']) is int else store_item['addr']
-                print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(store_item['value'], req.size, print_addr))
+                print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(store_item['value'], self.state.solver.eval(req.size), print_addr))
                 req.stored_values.append(store_item['value'])
                 self._insert_memory_object(store_item['value'], store_item['addr'], store_item['size'])
         l.debug("... done")

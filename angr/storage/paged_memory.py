@@ -457,7 +457,7 @@ class SimPagedMemory:
         :return: list of tuples of (addr, memory_object)
         :rtype: tuple
         """
-
+        print("WEWEWEW")
         result = [ ]
         end = addr + num_bytes
         for page_addr in self._containing_pages(addr, end):
@@ -503,6 +503,7 @@ class SimPagedMemory:
         return pg
 
     def _initialize_page(self, n, new_page):
+        print("Poge Coge Roge Moge")
         if n in self._initialized:
             return False
         self._initialized.add(n)
@@ -558,6 +559,9 @@ class SimPagedMemory:
                             relevant_data,
                             relevant_region_start,
                             byte_width=self.byte_width)
+                    print(relevant_region_start)
+                    print(relevant_region_end)
+                    print(relevant_data)
                     self._apply_object_to_page(new_page_addr, mo, page=new_page)
                 else:
                     for i, byte in enumerate(backer[slice_start:slice_end]):
@@ -605,6 +609,7 @@ class SimPagedMemory:
         return initialized
 
     def _get_page(self, page_num, write=False, create=False, initialize=True):
+        print("WOWZA")
         page_addr = page_num * self._page_size
         try:
             page = self._pages[page_num]
@@ -793,7 +798,7 @@ class SimPagedMemory:
         :param new_content: The content (claripy expression) for the new memory object.
         :returns: the new memory object
         """
-
+        print("Oh No")
         if (old.object.size() if not old.is_bytes else len(old.object)*self.state.arch.byte_width) != new_content.size():
             raise SimMemoryError("memory objects can only be replaced by the same length content")
 

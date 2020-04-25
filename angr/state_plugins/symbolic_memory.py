@@ -514,6 +514,10 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         return default_mo
 
     def _read_from(self, addr, num_bytes, inspect=True, events=True, ret_on_segv=False):
+        import inspect
+        print('caller name:', inspect.stack()[1][3])
+        print("I am the culprit now")
+
         items = self.mem.load_objects(addr, num_bytes, ret_on_segv=ret_on_segv)
 
         # optimize the case where we have a single object return
@@ -570,6 +574,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         if self.state.solver.symbolic(dst) and options.AVOID_MULTIVALUED_READS in self.state.options:
             return [ ], self.get_unconstrained_bytes("symbolic_read_unconstrained", size*self.state.arch.byte_width), [ ]
 
+        print(dst)
         # get a concrete set of read addresses
         try:
             addrs = self.state.solver.eval_upto(dst, 255, exact=True)
@@ -586,11 +591,13 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         if len(addrs) == 1:
             # It's not an conditional reaed
             constraint_options.append(dst == addrs[0])
+            print("Where Did I GO WRONG?")
             read_value = self._read_from(addrs[0], size, inspect=inspect, events=events)
         else:
             read_value = DUMMY_SYMBOLIC_READ_VALUE  # it's a sentinel value and should never be touched
 
             for a in addrs:
+                print("John Snuh?")
                 read_value = self.state.solver.If(dst == a, self._read_from(a, size, inspect=inspect, events=events),
                                               read_value)
                 constraint_options.append(dst == a)
@@ -608,7 +615,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
 
         print_addr = [claripy.BVV(addr, 64) if type(addr) is int else addr for addr in addrs]
         print("\n\nDOGE {} with size {} \n\nat {} DOGE\n\n".format(read_value, size, print_addr))
-        print(self.mem)
         return addrs, read_value, load_constraint
 
     def _find(self, start, what, max_search=None, max_symbolic_bytes=None, default=None, step=1,
@@ -1249,6 +1255,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         :param permissions: Integer or BVV to optionally set page permissions to
         :return:            AST representing the permissions on the page
         """
+        print("Who Give Pahmission?")
         out = self.mem.permissions(addr, permissions)
         # if unicorn is in play and we've marked a page writable, it must be uncached
         if permissions is not None and self.state.solver.is_true(permissions & 2 == 2):

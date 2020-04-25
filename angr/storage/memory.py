@@ -408,12 +408,6 @@ class SimMemory(SimStatePlugin):
         else:
             data_e = data_e.raw_to_bv()
 
-        bits = data_e[:]
-        if len(bits) > 64:
-            data_e = data_e.get_bytes(0, 8)
-        else:
-            data_e = claripy.SignExt(64 - len(bits), data_e)
-
         return self.state.solver.simplify(data_e)
 
     def set_stack_address_mapping(self, absolute_address, region_id, related_function_address=None):
@@ -491,7 +485,7 @@ class SimMemory(SimStatePlugin):
 
         addr_e = _raw_ast(addr)
         data_e = _raw_ast(data)
-        size_e = 8
+        size_e = _raw_ast(size)
         condition_e = _raw_ast(condition)
         add_constraints = True if add_constraints is None else add_constraints
 

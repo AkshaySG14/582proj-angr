@@ -26,7 +26,7 @@ class SimFlatMemory:
         # reverse mapping
         self._updated_mappings = set()
 
-        self.memory_array = claripy.ArrayV(64, claripy.BVV(0, 64)) if memory_array is None else memory_array
+        self.memory_array = claripy.ArrayV(64, claripy.BVV(0, 8)) if memory_array is None else memory_array
         self.addrs = set() if addrs is None else addrs
         self.paged_memory = SimPagedMemory(memory_backer=memory_backer, permissions_backer=permissions_backer,
                                            check_permissions=check_permissions) if paged_memory is None else paged_memory
@@ -80,25 +80,34 @@ class SimFlatMemory:
     def byte_width(self):
         return self.state.arch.byte_width if self.state is not None else 8
 
-    def load(self, addr):
+    def load(self, addr, size):
         """
         Load from memory.
 
         :param addr: Address to start loading.
+        :param size: Size of value to be loaded.
         :return: Bit vector of value at address
         :rtype: BV
         """
-        return self.memory_array[addr]
+        ret = self.state.solver.simplify(self.memory_array[addr])
+        for byte in range(1, size):
+            ret = self.state.solver.simplify(self.memory_array[addr + byte * self.byte_width]).concat(ret)
+        return ret
 
-    def store(self, addr, val):
+    def store(self, addr, val, size):
         """
         Store into memory.
 
         :param addr: Address to store in.
+        :param size: Size of value to be stored.
         :param val: Bit vector value to be stored
         """
+        # TODO: Fix incorrect behavior of addrs
         self.addrs.add(addr)
-        self.memory_array = claripy.Store(self.memory_array, addr, val)
+        for byte in range(0, size):
+            self.memory_array = claripy.Store(self.memory_array,
+                                              addr + byte * self.byte_width,
+                                              val[(byte + 1) * self.byte_width - 1:byte * self.byte_width])
 
     def contains(self, addr):
         """
@@ -222,7 +231,6 @@ class SimFlatMemory:
 
     @property
     def byte_width(self):
-        print("wooh9")
         return self.paged_memory.byte_width
 
     def load_objects(self, addr, num_bytes, ret_on_segv=False):

@@ -559,6 +559,7 @@ class SimPagedMemory:
                             relevant_data,
                             relevant_region_start,
                             byte_width=self.byte_width)
+                    print("HERE")
                     self._apply_object_to_page(new_page_addr, mo, page=new_page)
                 else:
                     for i, byte in enumerate(backer[slice_start:slice_end]):

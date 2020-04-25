@@ -524,7 +524,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             l.warning("Concretizing symbolic length. Much sad; think about implementing.")
 
         # for now, we always load the maximum size
-        _,max_size = self._resolve_size_range(size)
+        _, max_size = self._resolve_size_range(size)
         if options.ABSTRACT_MEMORY not in self.state.options and self.state.solver.symbolic(size):
             self.state.add_constraints(size == max_size, action=True)
 
@@ -539,10 +539,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             dst = claripy.BVV(dst, 64)
         dst = claripy.SignExt(64 - len(dst), dst)
 
-        read_value = self.mem.load(dst)
-        read_value = self.state.solver.simplify(read_value)
-        if not self.state.solver.symbolic(size):
-            read_value = read_value[size * 8 - 1:]
+        read_value = self.mem.load(dst, size)
         print("\n\nDOGE {} with size {} \n\nat {} DOGE\n\n".format(read_value, size, [dst]))
         return [dst], read_value, []
 
@@ -706,6 +703,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         if type(req.addr) is int:
             req.addr = claripy.BVV(req.addr, 64)
         req.addr = claripy.SignExt(64 - len(req.addr), req.addr)
+        req.size = self.state.solver.eval(req.size)
         if (self.category == 'mem' and options.SIMPLIFY_MEMORY_WRITES in self.state.options) or (
                 self.category == 'reg' and options.SIMPLIFY_REGISTER_WRITES in self.state.options):
             req.data = self.state.solver.simplify(req.data)
@@ -713,7 +711,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         if req.endness == "Iend_LE" or (req.endness is None and self.endness == "Iend_LE"):
             req.data = req.data.reversed
 
-        self.mem.store(req.addr, req.data)
+        self.mem.store(req.addr, req.data, req.size)
         print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(req.data, req.size, req.addr))
 
         l.debug("... done")

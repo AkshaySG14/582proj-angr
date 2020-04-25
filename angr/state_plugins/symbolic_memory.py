@@ -608,6 +608,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
 
         print_addr = [claripy.BVV(addr, 64) if type(addr) is int else addr for addr in addrs]
         print("\n\nDOGE {} with size {} \n\nat {} DOGE\n\n".format(read_value, size, print_addr))
+        print(self.mem)
         return addrs, read_value, load_constraint
 
     def _find(self, start, what, max_search=None, max_symbolic_bytes=None, default=None, step=1,
@@ -820,6 +821,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
                 self._insert_memory_object(store_item['value'], store_item['addr'], store_item['size'])
         l.debug("... done")
         req.completed = True
+        print(self.mem)
         return req
 
     def _insert_memory_object(self, value, address, size):

@@ -596,7 +596,6 @@ class SimPagedMemory:
                     flags = self._permission_map[(start, end)]
                     new_page.permissions = claripy.BVV(flags, 3)
                     break
-            print(new_page_addr)
             # for each clemory backer which intersects with the page, apply its relevant data
             for backer_addr, backer in self._memory_backer.backers(new_page_addr):
                 if backer_addr >= new_page_addr + self._page_size:
@@ -1079,7 +1078,6 @@ class SimPagedMemory:
         page_num = addr // self._page_size
 
         try:
-            print("Woge Coge Loge")
             page = self._get_page(page_num)
         except KeyError:
             raise SimMemoryMissingError("page does not exist at given address")
@@ -1135,8 +1133,7 @@ class SimPagedMemory:
                 else:
                     content = claripy.BVV(0, self._page_size * self.byte_width)
 
-                mo = SimMemoryObject(content, page_addr, byte_width=self.byte_width)
-                self._apply_object_to_page(page_addr, mo, page=self._pages[page_id])
+                self._write_memory(claripy.BVV(page_addr, 64), content, self._page_size)
                 if self.state is not None:
                     self.state.scratch.pop_priv()
 

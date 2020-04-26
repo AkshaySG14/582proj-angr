@@ -700,6 +700,9 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         # store it!!!
         #
         req.size = self.state.solver.eval(req.size)
+        req.stored_values = []
+        condition = req.condition
+
         if (self.category == 'mem' and options.SIMPLIFY_MEMORY_WRITES in self.state.options) or (
                 self.category == 'reg' and options.SIMPLIFY_REGISTER_WRITES in self.state.options):
             req.data = self.state.solver.simplify(req.data)
@@ -710,6 +713,8 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         if type(req.addr) is int:
             req.addr = claripy.BVV(req.addr, 64)
         req.addr = claripy.SignExt(64 - len(req.addr), req.addr)
+
+        req.stored_values = [req.data]
 
         self.mem.store(req.addr, req.data, req.size)
         print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(req.data, req.size, req.addr))
@@ -1166,7 +1171,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         :param init_zero: Initialize page with zeros
         """
         l.info("Mapping [%#x, %#x] as %s", addr, addr + length - 1, permissions)
-        print("Zoge")
         return self.mem.map_region(addr, length, permissions, init_zero=init_zero)
 
     def unmap_region(self, addr, length):

@@ -457,6 +457,9 @@ class SimPagedMemory:
         :return: list of tuples of (addr, memory_object)
         :rtype: tuple
         """
+        import inspect
+        print('caller name:', inspect.stack()[1][3])
+
         result = [ ]
         end = addr + num_bytes
         for page_addr in self._containing_pages(addr, end):

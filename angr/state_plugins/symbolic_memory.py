@@ -515,6 +515,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
 
     def _read_from(self, addr, num_bytes, inspect=True, events=True, ret_on_segv=False):
         import inspect
+        print('caller name:', inspect.stack()[1][3])
 
         items = self.mem.load_objects(addr, num_bytes, ret_on_segv=ret_on_segv)
 

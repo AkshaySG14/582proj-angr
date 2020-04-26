@@ -514,9 +514,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         return default_mo
 
     def _read_from(self, addr, num_bytes, inspect=True, events=True, ret_on_segv=False):
-        import inspect
-        print('caller name:', inspect.stack()[1][3])
-
         items = self.mem.load_objects(addr, num_bytes, ret_on_segv=ret_on_segv)
 
         # optimize the case where we have a single object return
@@ -1250,7 +1247,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         :param permissions: Integer or BVV to optionally set page permissions to
         :return:            AST representing the permissions on the page
         """
-        print("Who Give Pahmission?")
         out = self.mem.permissions(addr, permissions)
         # if unicorn is in play and we've marked a page writable, it must be uncached
         if permissions is not None and self.state.solver.is_true(permissions & 2 == 2):

@@ -2,6 +2,7 @@ import claripy
 import cle
 from sortedcontainers import SortedDict
 from collections import ChainMap
+from copy import copy
 import logging
 
 
@@ -328,13 +329,15 @@ class SimPagedMemory:
     """
     Represents paged memory.
     """
-    def __init__(self, memory_backer=None, permissions_backer=None, pages=None, initialized=None, name_mapping=None, hash_mapping=None, page_size=None, symbolic_addrs=None, check_permissions=False):
+    def __init__(self, memory_backer=None, permissions_backer=None, pages=None, memory_array=None, initialized=None,
+                 name_mapping=None, hash_mapping=None, page_size=None, symbolic_addrs=None, check_permissions=False):
         self._cowed = set()
         self._memory_backer = { } if memory_backer is None else memory_backer
         self._permissions_backer = permissions_backer # saved for copying
         self._executable_pages = False if permissions_backer is None else permissions_backer[0]
         self._permission_map = { } if permissions_backer is None else permissions_backer[1]
         self._pages = { } if pages is None else pages
+        self._memory_array = claripy.ArrayV(64, claripy.BVV(0, 8)) if memory_array is None else memory_array
         self._initialized = set() if initialized is None else initialized
         self._page_size = 0x1000 if page_size is None else page_size
         self._symbolic_addrs = dict() if symbolic_addrs is None else symbolic_addrs
@@ -379,6 +382,7 @@ class SimPagedMemory:
             '_executable_pages': self._executable_pages,
             '_permission_map': self._permission_map,
             '_pages': self._pages,
+            '_memory_array': self._memory_array,
             '_initialized': self._initialized,
             '_page_size': self._page_size,
             'state': None,
@@ -402,6 +406,7 @@ class SimPagedMemory:
         m = SimPagedMemory(memory_backer=self._memory_backer,
                            permissions_backer=self._permissions_backer,
                            pages=new_pages,
+                           memory_array=copy(self._memory_array),
                            initialized=set(self._initialized),
                            page_size=self._page_size,
                            name_mapping=new_name_mapping,
@@ -412,24 +417,10 @@ class SimPagedMemory:
         return m
 
     def __getitem__(self, addr):
-        page_num = addr // self._page_size
-        page_idx = addr
-        #print "GET", addr, page_num, page_idx
-
-        try:
-            v = self._get_page(page_num).load_mo(self.state, page_idx)
-            return v
-        except KeyError:
-            raise KeyError(addr)
+        return self._memory_array[addr]
 
     def __setitem__(self, addr, v):
-        page_num = addr // self._page_size
-        page_idx = addr
-        #print "SET", addr, page_num, page_idx
-
-        self._get_page(page_num, write=True, create=True)[page_idx] = v
-        self._update_mappings(addr, v.object)
-        #print "...",id(self._pages[page_num])
+        self._memory_array = claripy.Store(self._memory_array, addr, v)
 
     def __delitem__(self, addr):
         raise Exception("For performance reasons, deletion is not supported. Contact Yan if this needs to change.")
@@ -446,6 +437,33 @@ class SimPagedMemory:
     @property
     def byte_width(self):
         return self.state.arch.byte_width if self.state is not None else 8
+
+    def load(self, addr, size):
+        """
+        Load from memory.
+
+        :param addr: Address to start loading.
+        :param size: Size of value to be loaded.
+        :return: Bit vector of value at address
+        :rtype: BV
+        """
+        ret = self.state.solver.simplify(self._memory_array[addr])
+        for byte in range(1, size):
+            ret = ret.concat(self.state.solver.simplify(self._memory_array[addr + byte]))
+        return ret
+
+    def store(self, addr, val, size):
+        """
+        Store into memory.
+
+        :param addr: Address to store in.
+        :param size: Size of value to be stored.
+        :param val: Bit vector value to be stored
+        """
+        start_addr = addr + size - 1
+        for byte in range(0, size):
+            self._memory_array = claripy.Store(self._memory_array, start_addr - byte,
+                                              val[(byte + 1) * self.byte_width - 1:byte * self.byte_width])
 
     def load_objects(self, addr, num_bytes, ret_on_segv=False):
         """
@@ -633,9 +651,11 @@ class SimPagedMemory:
 
         return page
 
+    # TODO: Needs to be checked for correctness
     def __contains__(self, addr):
         try:
-            return self.__getitem__(addr) is not None
+            page_num = addr // self._page_size
+            return self._get_page(page_num) is not None
         except KeyError:
             return False
 
@@ -1030,6 +1050,7 @@ class SimPagedMemory:
         page_num = addr // self._page_size
 
         try:
+            print("Woge Coge Loge")
             page = self._get_page(page_num)
         except KeyError:
             raise SimMemoryMissingError("page does not exist at given address")

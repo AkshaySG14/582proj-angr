@@ -246,3 +246,133 @@ class SimFlatMemory:
         :rtype: tuple
         """
         return self.paged_memory.load_objects(addr, num_bytes, ret_on_segv)
+
+    def _initialize_page(self, n, new_page):
+        if n in self._initialized:
+            return False
+        self._initialized.add(n)
+
+        new_page_addr = n*self._page_size
+        initialized = False
+
+        if self.state is not None:
+            self.state.scratch.push_priv(True)
+
+        if self._memory_backer is None:
+            pass
+
+        elif isinstance(self._memory_backer, cle.Clemory) and self._memory_backer.is_concrete_target_set():
+            try:
+                concrete_memory = self._memory_backer.load(new_page_addr, self._page_size)
+                if self.byte_width == 8:
+                    backer = concrete_memory
+                else:
+                    backer = claripy.BVV(concrete_memory)
+                mo = SimMemoryObject(backer, new_page_addr, byte_width=self.byte_width)
+                self._apply_object_to_page(n * self._page_size, mo, page=new_page)
+                initialized = True
+            except SimConcreteMemoryError:
+                l.debug("The address requested is not mapped in the concrete process memory \
+                this can happen when a memory allocation function/syscall is invoked in the simulated execution \
+                and the map_region function is called")
+
+                return initialized
+
+        elif isinstance(self._memory_backer, cle.Clemory):
+            # find permission backer associated with the address
+            # fall back to default (read-write-maybe-exec) if can't find any
+            for start, end in self._permission_map:
+                if start <= new_page_addr < end:
+                    flags = self._permission_map[(start, end)]
+                    new_page.permissions = claripy.BVV(flags, 3)
+                    break
+
+            # for each clemory backer which intersects with the page, apply its relevant data
+            for backer_addr, backer in self._memory_backer.backers(new_page_addr):
+                if backer_addr >= new_page_addr + self._page_size:
+                    break
+
+                relevant_region_start = max(new_page_addr, backer_addr)
+                relevant_region_end = min(new_page_addr + self._page_size, backer_addr + len(backer))
+                slice_start = relevant_region_start - backer_addr
+                slice_end = relevant_region_end - backer_addr
+
+                if self.byte_width == 8:
+                    relevant_data = bytes(memoryview(backer)[slice_start:slice_end])
+                    mo = SimMemoryObject(
+                            relevant_data,
+                            relevant_region_start,
+                            byte_width=self.byte_width)
+                    print("HERE")
+                    self._apply_object_to_page(new_page_addr, mo, page=new_page)
+                else:
+                    for i, byte in enumerate(backer[slice_start:slice_end]):
+                        mo = SimMemoryObject(claripy.BVV(byte, self.byte_width),
+                                relevant_region_start + i,
+                                byte_width=self.byte_width)
+                        self._apply_object_to_page(new_page_addr, mo, page=new_page)
+
+                initialized = True
+
+        elif len(self._memory_backer) <= self._page_size:
+            for i in self._memory_backer:
+                if new_page_addr <= i <= new_page_addr + self._page_size:
+                    if isinstance(self._memory_backer[i], claripy.ast.Base):
+                        backer = self._memory_backer[i]
+                    elif isinstance(self._memory_backer[i], bytes):
+                        backer = self._memory_backer[i]
+                        if self.byte_width != 8: # if we have direct bytes we can store it directly
+                            backer = claripy.BVV(backer)
+                    else:
+                        backer = claripy.BVV(self._memory_backer[i], self.byte_width)
+                    mo = SimMemoryObject(backer, i, byte_width=self.byte_width)
+                    self._apply_object_to_page(n*self._page_size, mo, page=new_page)
+                    initialized = True
+
+        elif len(self._memory_backer) > self._page_size:
+            for i in range(self._page_size):
+                try:
+                    backer = self._memory_backer[i]
+
+                    if not isinstance(self._memory_backer[i], (claripy.ast.Base, bytes)):
+                        backer = claripy.BVV(self._memory_backer[i], self.byte_width)
+
+                    if type(backer) is bytes and self.byte_width != 8:
+                        backer = claripy.BVV(backer)
+
+                    mo = SimMemoryObject(backer, new_page_addr+i, byte_width=self.byte_width)
+                    self._apply_object_to_page(n*self._page_size, mo, page=new_page)
+                    initialized = True
+                except KeyError:
+                    pass
+
+        if self.state is not None:
+            self.state.scratch.pop_priv()
+        return initialized
+
+    def _get_page(self, page_num, write=False, create=False, initialize=True):
+        page_addr = page_num * self._page_size
+        try:
+            page = self._pages[page_num]
+        except KeyError:
+            if not (initialize or create or page_addr in self._preapproved_stack):
+                raise
+
+            page = self._create_page(page_num)
+            self._symbolic_addrs[page_num] = set()
+            if initialize:
+                initialized = self._initialize_page(page_num, page)
+                if not initialized and not create and page_addr not in self._preapproved_stack:
+                    raise
+
+            self._pages[page_num] = page
+            self._cowed.add(page_num)
+            return page
+
+        if write and page_num not in self._cowed:
+            page = page.copy()
+            self._symbolic_addrs[page_num] = set(self._symbolic_addrs[page_num])
+            self._cowed.add(page_num)
+            self._pages[page_num] = page
+
+        return page

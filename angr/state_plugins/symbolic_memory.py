@@ -8,7 +8,7 @@ l = logging.getLogger(name=__name__)
 import claripy
 
 from ..storage.memory import SimMemory, DUMMY_SYMBOLIC_READ_VALUE
-from ..storage.flat_memory import SimFlatMemory
+from ..storage.flat_memory import SimPagedMemory
 from ..storage.memory_object import SimMemoryObject
 from ..sim_state_options import SimStateOptions
 from ..misc.ux import once
@@ -47,7 +47,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
 
         if check_permissions is None:
             check_permissions = self.category == 'mem'
-        self.mem = SimFlatMemory(
+        self.mem = SimPagedMemory(
             memory_backer=memory_backer,
             permissions_backer=permissions_backer,
             check_permissions=check_permissions
@@ -517,6 +517,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         return default_mo
 
     def _read_from(self, addr, num_bytes, inspect=True, events=True, ret_on_segv=False):
+        print("WHY ARE U LIEK DIS?")
         return self.mem.load(addr, num_bytes)
 
     def _load(self, dst, size, condition=None, fallback=None, inspect=True, events=True, ret_on_segv=False):
@@ -652,9 +653,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             return r, constraints, match_indices
 
     def __contains__(self, dst):
-        if type(dst) is int:
-            dst = claripy.BVV(dst, 64)
-        return self.mem.contains(dst)
+        return dst in self.mem
 
     def was_written_to(self, dst):
         if isinstance(dst, int):

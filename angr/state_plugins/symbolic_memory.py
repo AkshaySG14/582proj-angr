@@ -699,9 +699,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         #
         # store it!!!
         #
-        if type(req.addr) is int:
-            req.addr = claripy.BVV(req.addr, 64)
-        req.addr = claripy.SignExt(64 - len(req.addr), req.addr)
         req.size = self.state.solver.eval(req.size)
         if (self.category == 'mem' and options.SIMPLIFY_MEMORY_WRITES in self.state.options) or (
                 self.category == 'reg' and options.SIMPLIFY_REGISTER_WRITES in self.state.options):
@@ -709,6 +706,10 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
 
         if req.endness == "Iend_LE" or (req.endness is None and self.endness == "Iend_LE"):
             req.data = req.data.reversed
+
+        if type(req.addr) is int:
+            req.addr = claripy.BVV(req.addr, 64)
+        req.addr = claripy.SignExt(64 - len(req.addr), req.addr)
 
         self.mem.store(req.addr, req.data, req.size)
         print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(req.data, req.size, req.addr))

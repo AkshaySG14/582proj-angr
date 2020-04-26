@@ -440,6 +440,21 @@ class SimPagedMemory:
 
     def load(self, addr, size):
         """
+        Gets the pages pertaining to address and then loads from memory.
+
+        :param addr: Address to start loading.
+        :param size: Size of value to be loaded.
+        :return: Bit vector of value at address
+        :rtype: BV
+        """
+        if not self.state.solver.symbolic(addr):
+            concrete_addr = self.state.solver.eval(addr)
+            for p in self._containing_pages(concrete_addr, concrete_addr + size):
+                self._get_page(self._page_id(p))
+        return self._get_memory(addr, size)
+
+    def _get_memory(self, addr, size):
+        """
         Load from memory.
 
         :param addr: Address to start loading.
@@ -454,7 +469,28 @@ class SimPagedMemory:
 
     def store(self, addr, val, size):
         """
-        Store into memory.
+        Gets the pages pertaining to address and then writes to memory.
+
+        :param addr: Address to store in.
+        :param size: Size of value to be stored.
+        :param val: Bit vector value to be stored
+        """
+        if not self.state.solver.symbolic(addr):
+            concrete_addr = self.state.solver.eval(addr)
+            for p in self._containing_pages(concrete_addr, concrete_addr + size):
+                try:
+                    page = self._get_page(self._page_id(p), write=True, create=not self.allow_segv)
+                except KeyError:
+                    if self.allow_segv:
+                        raise SimSegfaultError(p, 'write-miss')
+                    raise
+                if self.allow_segv and not page.concrete_permissions & Page.PROT_WRITE:
+                    raise SimSegfaultError(p, 'non-writable')
+        self._write_memory(addr, val, size)
+
+    def _write_memory(self, addr, val, size):
+        """
+        Writes into memory.
 
         :param addr: Address to store in.
         :param size: Size of value to be stored.
@@ -463,7 +499,7 @@ class SimPagedMemory:
         start_addr = addr + size - 1
         for byte in range(0, size):
             self._memory_array = claripy.Store(self._memory_array, start_addr - byte,
-                                              val[(byte + 1) * self.byte_width - 1:byte * self.byte_width])
+                                               val[(byte + 1) * self.byte_width - 1:byte * self.byte_width])
 
     def load_objects(self, addr, num_bytes, ret_on_segv=False):
         """
@@ -560,7 +596,7 @@ class SimPagedMemory:
                     flags = self._permission_map[(start, end)]
                     new_page.permissions = claripy.BVV(flags, 3)
                     break
-
+            print(new_page_addr)
             # for each clemory backer which intersects with the page, apply its relevant data
             for backer_addr, backer in self._memory_backer.backers(new_page_addr):
                 if backer_addr >= new_page_addr + self._page_size:
@@ -573,21 +609,15 @@ class SimPagedMemory:
 
                 if self.byte_width == 8:
                     relevant_data = bytes(memoryview(backer)[slice_start:slice_end])
-                    mo = SimMemoryObject(
-                            relevant_data,
-                            relevant_region_start,
-                            byte_width=self.byte_width)
-                    print("HERE")
-                    self._apply_object_to_page(new_page_addr, mo, page=new_page)
+                    self._write_memory(claripy.BVV(relevant_region_start, 64),
+                                       claripy.BVV(relevant_data),
+                                       relevant_region_end - relevant_region_start)
                 else:
                     for i, byte in enumerate(backer[slice_start:slice_end]):
-                        mo = SimMemoryObject(claripy.BVV(byte, self.byte_width),
-                                relevant_region_start + i,
-                                byte_width=self.byte_width)
-                        self._apply_object_to_page(new_page_addr, mo, page=new_page)
+                        self._write_memory(relevant_region_start + i, claripy.BVV(byte, self.byte_width),
+                                           self.byte_width)
 
                 initialized = True
-
         elif len(self._memory_backer) <= self._page_size:
             for i in self._memory_backer:
                 if new_page_addr <= i <= new_page_addr + self._page_size:
@@ -631,7 +661,6 @@ class SimPagedMemory:
         except KeyError:
             if not (initialize or create or page_addr in self._preapproved_stack):
                 raise
-
             page = self._create_page(page_num)
             self._symbolic_addrs[page_num] = set()
             if initialize:

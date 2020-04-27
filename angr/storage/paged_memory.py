@@ -475,17 +475,17 @@ class SimPagedMemory:
         :param size: Size of value to be stored.
         :param val: Bit vector value to be stored
         """
-        if not self.state.solver.symbolic(addr):
-            concrete_addr = self.state.solver.eval(addr)
-            for p in self._containing_pages(concrete_addr, concrete_addr + size):
-                try:
-                    page = self._get_page(self._page_id(p), write=True, create=not self.allow_segv)
-                except KeyError:
-                    if self.allow_segv:
-                        raise SimSegfaultError(p, 'write-miss')
-                    raise
-                if self.allow_segv and not page.concrete_permissions & Page.PROT_WRITE:
-                    raise SimSegfaultError(p, 'non-writable')
+        concrete_addr = self.state.solver.eval(addr)
+        for p in self._containing_pages(concrete_addr, concrete_addr + size):
+            try:
+                page = self._get_page(self._page_id(p), write=True, create=not self.allow_segv)
+            except KeyError:
+                if self.allow_segv:
+                    raise SimSegfaultError(p, 'write-miss')
+                raise
+            if self.allow_segv and not page.concrete_permissions & Page.PROT_WRITE:
+                raise SimSegfaultError(p, 'non-writable')
+
         self._write_memory(addr, val, size)
 
     def _write_memory(self, addr, val, size):

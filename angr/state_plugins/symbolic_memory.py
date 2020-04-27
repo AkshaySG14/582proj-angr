@@ -535,7 +535,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         size = max_size
         if self.state.solver.symbolic(dst) and options.AVOID_MULTIVALUED_READS in self.state.options:
             return [ ], self.get_unconstrained_bytes("symbolic_read_unconstrained", size*self.state.arch.byte_width), [ ]
-
         if type(dst) is int:
             dst = claripy.BVV(dst, 64)
         dst = claripy.SignExt(64 - len(dst), dst)

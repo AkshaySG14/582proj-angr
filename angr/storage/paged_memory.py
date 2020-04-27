@@ -462,10 +462,10 @@ class SimPagedMemory:
         :return: Bit vector of value at address
         :rtype: BV
         """
-        ret = self.state.solver.simplify(self._memory_array[addr])
+        ret = self._memory_array[addr]
         for byte in range(1, size):
-            ret = ret.concat(self.state.solver.simplify(self._memory_array[addr + byte]))
-        return ret
+            ret = ret.concat(self._memory_array[addr + byte])
+        return self.state.solver.simplify(ret)
 
     def store(self, addr, val, size):
         """

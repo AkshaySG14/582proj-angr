@@ -475,7 +475,6 @@ class SimMemory(SimStatePlugin):
         :param bool disable_actions: Whether this store should avoid creating SimActions or not. When set to False,
                                      state options are respected.
         """
-
         _inspect = inspect and self.state.supports_inspect
 
         if priv is not None: self.state.scratch.push_priv(priv)
@@ -730,7 +729,6 @@ class SimMemory(SimStatePlugin):
 
             <A If(condition, BVV(0x41, 32), fallback)>
         """
-
         _inspect = inspect and self.state.supports_inspect
 
         add_constraints = True if add_constraints is None else add_constraints
@@ -813,8 +811,6 @@ class SimMemory(SimStatePlugin):
         if endness == "Iend_LE":
             r = r.reversed
 
-        # print("VAL AFTER {} VAL AFTER".format(r))
-
         if _inspect:
             if self.category == 'mem':
                 self.state._inspect('mem_read', BP_AFTER, mem_read_expr=r)
@@ -843,7 +839,6 @@ class SimMemory(SimStatePlugin):
                 action.actual_addrs = a
                 action.added_constraints = action._make_object(self.state.solver.And(*c)
                                                                if len(c) > 0 else self.state.solver.true)
-
         return r
 
     def _constrain_underconstrained_index(self, addr_e):

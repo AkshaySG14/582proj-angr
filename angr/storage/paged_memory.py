@@ -74,7 +74,6 @@ class BasePage:
         :param new_mo: the memory object
         :param overwrite: whether to overwrite objects already in memory (if false, just fill in the holes)
         """
-        print(new_mo)
         start, end = self._resolve_range(new_mo)
         if overwrite:
             self.store_overwrite(state, new_mo, start, end)
@@ -337,7 +336,7 @@ class SimPagedMemory:
         self._executable_pages = False if permissions_backer is None else permissions_backer[0]
         self._permission_map = { } if permissions_backer is None else permissions_backer[1]
         self._pages = { } if pages is None else pages
-        self._memory_array = claripy.ArrayS('a', 64, 8) if memory_array is None else memory_array
+        self._memory_array = claripy.ArrayS('memory', 64, 8) if memory_array is None else memory_array
         self._initialized = set() if initialized is None else initialized
         self._page_size = 0x1000 if page_size is None else page_size
         self._symbolic_addrs = dict() if symbolic_addrs is None else symbolic_addrs
@@ -465,11 +464,7 @@ class SimPagedMemory:
         ret = self._memory_array[addr]
         for byte in range(1, size):
             ret = ret.concat(self._memory_array[addr + byte])
-        try:
-            ret = self.state.solver.simplify(ret)
-        except claripy.ClaripyError:
-            print(self.state.solver.eval_upto(ret, 5))
-            return ret
+        ret = self.state.simplify(ret)
         return ret
 
     def store(self, addr, val, size):

@@ -8,7 +8,7 @@ l = logging.getLogger(name=__name__)
 import claripy
 
 from ..storage.memory import SimMemory, DUMMY_SYMBOLIC_READ_VALUE
-from ..storage.flat_memory import SimPagedMemory
+from ..storage.paged_memory import SimPagedMemory
 from ..storage.memory_object import SimMemoryObject
 from ..sim_state_options import SimStateOptions
 from ..misc.ux import once
@@ -187,7 +187,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
                         continue
 
                 # do the replacement
-                print("Doge")
                 new_object = self.mem.replace_memory_object(our_mo, merged_val)
                 merged_objects.add(new_object)
                 merged_objects.update(mos)
@@ -438,7 +437,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             name = "reg_%s" % (self.state.arch.translate_register_name(addr))
         else:
             name = "%s_%x" % (self.id, addr)
-        print("Poge")
         all_missing = [
             self.get_unconstrained_bytes(
                 name,
@@ -511,13 +509,11 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             self.state.history.add_event('uninitialized', memory_id=self.id, addr=addr, size=num_bytes)
         default_mo = SimMemoryObject(b, addr, byte_width=self.state.arch.byte_width)
         self.state.scratch.push_priv(True)
-        print("Woge")
         self.mem.store_memory_object(default_mo, overwrite=False)
         self.state.scratch.pop_priv()
         return default_mo
 
     def _read_from(self, addr, num_bytes, inspect=True, events=True, ret_on_segv=False):
-        print("WHY ARE U LIEK DIS?")
         return self.mem.load(addr, num_bytes)
 
     def _load(self, dst, size, condition=None, fallback=None, inspect=True, events=True, ret_on_segv=False):
@@ -537,13 +533,8 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         if type(dst) is int:
             dst = claripy.BVV(dst, 64)
         dst = claripy.SignExt(64 - len(dst), dst)
-
         read_value = self.mem.load(dst, size)
 
-        if not self.state.solver.symbolic(read_value):
-            print("\n\nDOGE {} with size {} \n\nat {} DOGE\n\n".format(read_value, size, [dst]))
-        else:
-            print("\n\nsize {} \n\nat {} DOGE\n\n".format(size, [dst]))
         return [dst], read_value, []
 
     def _find(self, start, what, max_search=None, max_symbolic_bytes=None, default=None, step=1,
@@ -665,7 +656,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             return False
         else:
             addr = self.state.solver.eval(dst)
-        print("Qogewew")
         return self.mem.contains_no_backer(addr)
 
     #
@@ -718,10 +708,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         req.stored_values = [req.data]
 
         self.mem.store(req.addr, req.data, req.size)
-        if not self.state.solver.symbolic(req.data):
-            print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(req.data, req.size, req.addr))
-        else:
-            print("\n\nsize {} \n\nat {} COGE\n\n".format(req.size, req.addr))
         l.debug("... done")
         req.completed = True
         return req
@@ -802,7 +788,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         return stored_values
 
     def flush_pages(self, whitelist):
-        print("Flush")
         flushed_regions = self.mem.flush_pages(whitelist)
         if self.state.has_plugin('unicorn'):
             for addr, length in flushed_regions:
@@ -1089,7 +1074,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         :param other:   The other :class:`SimSymbolicMemory`.
         :returns:       A set of differing bytes
         """
-        print("Toge")
         return self.mem.changed_bytes(other.mem)
 
     def replace_all(self, old, new):
@@ -1100,7 +1084,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
                     to make it possible to use the name index for speedup)
         :param new: The new variable to replace it with
         """
-        print("Uoge")
         return self.mem.replace_all(old, new)
 
     def addrs_for_name(self, n):
@@ -1108,7 +1091,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         Returns addresses that contain expressions that contain a variable
         named `n`.
         """
-        print("Ioge")
         return self.mem.addrs_for_name(n)
 
     def addrs_for_hash(self, h):
@@ -1116,7 +1098,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         Returns addresses that contain expressions that contain a variable
         with the hash of `h`.
         """
-        print("Ooge")
         return self.mem.addrs_for_hash(h)
 
     def replace_memory_object(self, old, new_content):
@@ -1128,7 +1109,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
                             memory_objects_for_name())
         :param new_content: the content (claripy expression) for the new memory object
         """
-        print("Foge")
         return self.mem.replace_memory_object(old, new_content)
 
     def memory_objects_for_name(self, n):
@@ -1137,7 +1117,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         with the name of n. This is useful for replacing those values, in one fell swoop,
         with replace_memory_object(), even if they've been partially overwritten.
         """
-        print("Voge")
         return self.mem.memory_objects_for_name(n)
 
     def memory_objects_for_hash(self, n):
@@ -1146,7 +1125,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         with the hash of h. This is useful for replacing those values, in one fell swoop,
         with replace_memory_object(), even if they've been partially overwritten.
         """
-        print("Boge")
         return self.mem.memory_objects_for_hash(n)
 
     def permissions(self, addr, permissions=None):
@@ -1184,7 +1162,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         """
         if self.state.has_plugin('unicorn'):
             self.state.unicorn.uncache_region(addr, length)
-        print("XYZoge")
         return self.mem.unmap_region(addr, length)
 
 

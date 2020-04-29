@@ -523,7 +523,6 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
     def _load(self, dst, size, condition=None, fallback=None, inspect=True, events=True, ret_on_segv=False):
         if self.state.solver.symbolic(size):
             l.warning("Concretizing symbolic length. Much sad; think about implementing.")
-
         # for now, we always load the maximum size
         _, max_size = self._resolve_size_range(size)
         if options.ABSTRACT_MEMORY not in self.state.options and self.state.solver.symbolic(size):
@@ -540,8 +539,11 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         dst = claripy.SignExt(64 - len(dst), dst)
 
         read_value = self.mem.load(dst, size)
-        print("\n\nDOGE {} with size {} \n\nat {} DOGE\n\n".format(read_value, size, [dst]))
-        print(self.mem)
+
+        if not self.state.solver.symbolic(read_value):
+            print("\n\nDOGE {} with size {} \n\nat {} DOGE\n\n".format(read_value, size, [dst]))
+        else:
+            print("\n\nsize {} \n\nat {} DOGE\n\n".format(size, [dst]))
         return [dst], read_value, []
 
     def _find(self, start, what, max_search=None, max_symbolic_bytes=None, default=None, step=1,
@@ -663,7 +665,7 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
             return False
         else:
             addr = self.state.solver.eval(dst)
-        print("Qoge")
+        print("Qogewew")
         return self.mem.contains_no_backer(addr)
 
     #
@@ -702,10 +704,9 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         req.size = self.state.solver.eval(req.size)
         req.stored_values = []
         condition = req.condition
-
-        if (self.category == 'mem' and options.SIMPLIFY_MEMORY_WRITES in self.state.options) or (
-                self.category == 'reg' and options.SIMPLIFY_REGISTER_WRITES in self.state.options):
-            req.data = self.state.solver.simplify(req.data)
+        # if (self.category == 'mem' and options.SIMPLIFY_MEMORY_WRITES in self.state.options) or (
+        #         self.category == 'reg' and options.SIMPLIFY_REGISTER_WRITES in self.state.options):
+        #     req.data = self.state.solver.simplify(req.data)
 
         if req.endness == "Iend_LE" or (req.endness is None and self.endness == "Iend_LE"):
             req.data = req.data.reversed
@@ -717,8 +718,10 @@ class SimSymbolicMemory(SimMemory): #pylint:disable=abstract-method
         req.stored_values = [req.data]
 
         self.mem.store(req.addr, req.data, req.size)
-        print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(req.data, req.size, req.addr))
-        print(self.mem)
+        if not self.state.solver.symbolic(req.data):
+            print("\n\nCOGE {} with size {} \n\nat {} COGE\n\n".format(req.data, req.size, req.addr))
+        else:
+            print("\n\nsize {} \n\nat {} COGE\n\n".format(req.size, req.addr))
         l.debug("... done")
         req.completed = True
         return req
